@@ -1,0 +1,27 @@
+[package]
+name = "cw-optimizoor"
+version = "0.0.1"
+authors = ["Sebastian Mandrean <sebastian.mandrean@gmail.com>"]
+edition = "2021"
+description = "A blazingly fast compiling & optimization tool for CosmWasm smart contracts."
+documentation = "https://docs.rs/cw-optimizoor"
+readme = "README.md"
+repository = "https://github.com/mandrean/cw-optimizoor"
+license = "MIT"
+keywords = ["cosmwasm", "cw", "binaryen", "wasm", "optimizer"]
+categories = ["development-tools::cargo-plugins", "cryptography::cryptocurrencies"]
+
+[[bin]]
+name = "cargo-cw-optimizoor"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1"
+binaryen = "0.12"
+cargo = "0.63"
+clap = { version = "3", features = ["derive"] }
+lazy_static = "1.4"
+num_cpus = "1.13"
+path-absolutize = "3.0"
+rayon = "1.5"
+unicode-segmentation = "1.9"
