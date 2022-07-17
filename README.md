@@ -22,7 +22,7 @@ A blazingly fast alternative to [CosmWasm/rust-optimizer] for compiling & optimi
 ### Installation
 
 ```sh
-$ cargo install cargo-cw-optimizoor
+$ cargo install cw-optimizoor
 ```
 
 ### Usage
