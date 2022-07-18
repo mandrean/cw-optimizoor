@@ -12,6 +12,59 @@ use std::{
 
 use anyhow::{anyhow, Result};
 use binaryen::Module;
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+
+use crate::hashing::checksum;
+
+pub fn incremental_optimizations(
+    output_dir: &PathBuf,
+    intermediate_wasm_paths: Vec<PathBuf>,
+    prev_intermediate_checksums: String,
+) -> Result<Vec<PathBuf>> {
+    let mut checksums = String::new();
+    File::options()
+        .read(true)
+        .write(true)
+        .create(true)
+        .open(&output_dir.join("checksums.txt"))?
+        .read_to_string(&mut checksums)?;
+    let final_wasm_paths = intermediate_wasm_paths
+        .par_iter()
+        .map(|wasm_path| {
+            let output_path = optimized_output_path(wasm_path, output_dir)?;
+
+            // if optimized artifact exists,
+            // and both its and prev intermediate artifact checksums match,
+            // then skip optimizing it again
+            if output_path.exists()
+                && prev_intermediate_checksums
+                    .contains(&checksum(wasm_path).expect("couldn't calculate checksum"))
+                && checksums.contains(&checksum(&output_path).expect("couldn't calculate checksum"))
+            {
+                println!(
+                    "    ...⏭️  {} is unchanged. Skipping.",
+                    wasm_path
+                        .file_stem()
+                        .expect("missing file stem")
+                        .to_string_lossy()
+                );
+            } else {
+                optimize(wasm_path, &output_path)?;
+                println!(
+                    "    ...✅ {} was optimized.",
+                    wasm_path
+                        .file_stem()
+                        .expect("missing file stem")
+                        .to_string_lossy()
+                );
+            }
+
+            anyhow::Ok(output_path)
+        })
+        .collect::<Result<Vec<PathBuf>>>()?;
+
+    Ok(final_wasm_paths)
+}
 
 /// Optimizes the WASM artifact using binaryen/wasm-opt.
 pub fn optimize<P: AsRef<Path>>(input_path: P, output_path: P) -> Result<()> {
