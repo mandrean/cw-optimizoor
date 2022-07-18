@@ -427,7 +427,6 @@ dependencies = [
  "num_cpus",
  "path-absolutize",
  "rayon",
- "unicode-segmentation",
 ]
 
 [[package]]

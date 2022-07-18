@@ -4,7 +4,7 @@ use anyhow::Result;
 use cargo::{core::Workspace, ops};
 use clap::Parser;
 use path_absolutize::Absolutize;
-use rayon::iter::{IntoParallelIterator, ParallelIterator};
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 use cw_optimizoor::{compilation::*, ext::*, optimization::*};
 
@@ -41,17 +41,18 @@ fn main() -> Result<()> {
 
     println!("🧐️  Compiling ...{}", manifest_path.display());
     let wasm_paths = compile(&compile_opts, &ws)?;
+    println!("🥸  Ahh I'm optimiziing:");
+    let final_wasm_paths = intermediate_wasm_paths
+        .par_iter()
+        .map(|wasm_path| {
+            let output_path = optimized_output_path(wasm_path, &output_dir)?;
+            optimize(wasm_path, &output_path)?;
 
-    println!("🥸  Ahh I'm optimiziing");
-    wasm_paths.into_par_iter().try_for_each(|wasm_path| {
-        println!(
-            "    ...{}",
-            wasm_path.to_string_lossy().to_string().rtake(70)
-        );
-        let output_path = optimized_output_path(&wasm_path, &output_dir)?;
-        optimize(&wasm_path, &output_path)?;
-        anyhow::Ok(())
-    })?;
+            println!("    .../{}", wasm_path.rtake(5).display());
+            anyhow::Ok(output_path)
+        })
+        .collect::<Result<Vec<PathBuf>>>()?;
+
     println!(
         "🫡  Done. Saved optimized artifacts to {}/artifacts",
         ws.root().display()
