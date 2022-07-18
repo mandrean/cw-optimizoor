@@ -1,11 +1,11 @@
+use std::fs::File;
+use std::io::Read;
 use std::{fs, path::PathBuf};
 
 use anyhow::Result;
 use cargo::{core::Workspace, ops};
 use clap::Parser;
-
 use path_absolutize::Absolutize;
-use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 use cw_optimizoor::{compilation::*, ext::*, hashing::*, optimization::*};
 
@@ -43,22 +43,25 @@ fn main() -> Result<()> {
     println!("🧐️  Compiling .../{}", manifest_path.rtake(2).display());
     let intermediate_wasm_paths = compile(&compile_opts, &ws)?;
     println!("🤓  Intermediate checksums:");
+    let mut prev_intermediate_checksums = String::new();
+    File::options()
+        .read(true)
+        .write(true)
+        .create(true)
+        .open(&output_dir.join("checksums_intermediate.txt"))?
+        .read_to_string(&mut prev_intermediate_checksums)?;
     write_checksums(
         &intermediate_wasm_paths,
         &output_dir.join("checksums_intermediate.txt"),
     )?;
 
-    println!("🥸  Ahh I'm optimiziing:");
-    let final_wasm_paths = intermediate_wasm_paths
-        .par_iter()
-        .map(|wasm_path| {
-            let output_path = optimized_output_path(wasm_path, &output_dir)?;
-            optimize(wasm_path, &output_path)?;
+    println!("🥸  Ahh I'm optimiziing");
+    let final_wasm_paths = incremental_optimizations(
+        &output_dir,
+        intermediate_wasm_paths,
+        prev_intermediate_checksums,
+    )?;
 
-            println!("    .../{}", wasm_path.rtake(5).display());
-            anyhow::Ok(output_path)
-        })
-        .collect::<Result<Vec<PathBuf>>>()?;
     println!("🤓  Final checksums:");
     write_checksums(&final_wasm_paths, &output_dir.join("checksums.txt"))?;
 

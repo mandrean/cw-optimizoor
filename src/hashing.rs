@@ -36,24 +36,26 @@ pub fn write_checksums(wasm_paths: &[PathBuf], output_file: &PathBuf) -> Result<
             .open(output_file)?,
     );
     let _ = wasm_paths.iter().try_for_each(|wasm_path| {
-        let input = File::open(wasm_path)?;
-        let reader = BufReader::new(input);
-        let digest = sha256_digest(reader)?;
-
-        let checksum = format!(
-            "{}  {}\n",
-            &digest.encode_hex::<String>(),
-            wasm_path.rtake(1).display(),
-        );
+        let checksum = checksum(wasm_path)?;
         checksums.write_all(checksum.as_bytes())?;
 
-        println!(
-            "    ...{}  {}",
-            &digest.encode_hex::<String>(),
-            wasm_path.rtake(1).display()
-        );
+        print!("    ...{}", &checksum);
         anyhow::Ok(())
     });
 
     checksums.flush().map_err(|e| anyhow!(e))
+}
+
+/// Calculates the checksum of a provided artifact.
+pub fn checksum(wasm_path: &PathBuf) -> Result<String> {
+    let input = File::open(wasm_path)?;
+    let reader = BufReader::new(input);
+    let digest = sha256_digest(reader)?;
+    let checksum = format!(
+        "{}  {}\n",
+        &digest.encode_hex::<String>(),
+        wasm_path.rtake(1).display(),
+    );
+
+    Ok(checksum)
 }
