@@ -14,7 +14,12 @@ pub mod optimization;
 pub fn run(manifest_path: &PathBuf) -> anyhow::Result<(), Error> {
     let cfg = config()?;
     let ws = Workspace::new(manifest_path.as_ref(), &cfg).expect("couldn't create workspace");
-    let compile_opts = compile_opts(&cfg, Some(ops::Packages::Default))?;
+    let contracts = ws
+        .members()
+        .filter(|&p| p.manifest_path().starts_with(&ws.root().join("contracts")))
+        .map(|p| p.package_id().name().to_string())
+        .collect::<Vec<String>>();
+    let compile_opts = compile_opts(&cfg, ops::Packages::Packages(contracts))?;
     let output_dir = create_artifacts_dir(&ws)?;
 
     println!("🧐️  Compiling .../{}", &manifest_path.rtake(2).display());

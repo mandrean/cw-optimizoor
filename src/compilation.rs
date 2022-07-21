@@ -34,11 +34,11 @@ pub fn compile(compile_opts: &CompileOptions, ws: &Workspace) -> Result<Vec<Path
 }
 
 /// Sets up the high-level compilation options.
-pub fn compile_opts(config: &Config, spec: Option<ops::Packages>) -> Result<CompileOptions> {
+pub fn compile_opts(config: &Config, spec: ops::Packages) -> Result<CompileOptions> {
     Ok(CompileOptions {
         build_config: build_cfg(config)?,
         cli_features: CliFeatures::new_all(false),
-        spec: spec.unwrap_or(ops::Packages::Default),
+        spec,
         filter: CompileFilter::Default {
             required_features_filterable: false,
         },
