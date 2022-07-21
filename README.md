@@ -21,6 +21,12 @@ A blazingly fast alternative to [CosmWasm/rust-optimizer] for compiling & optimi
 
 ### Installation
 
+Make sure you have `cmake` installed. On macOS run:
+```sh
+$ brew install cmake
+```
+
+Then:
 ```sh
 $ cargo install cw-optimizoor
 ```
