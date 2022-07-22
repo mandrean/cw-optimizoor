@@ -1,5 +1,4 @@
 use anyhow::Result;
-
 use clap::Parser;
 use path_absolutize::Absolutize;
 

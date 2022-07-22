@@ -8,7 +8,7 @@ use anyhow::{anyhow, Result};
 use hex::ToHex;
 use ring::digest::{Context, Digest, SHA256};
 
-use crate::ext::RTake;
+use crate::ext::TakeExt;
 
 /// Calculates the SHA-256 digest of a buffer.
 pub fn sha256_digest<R: Read>(mut reader: R) -> Result<Digest> {
