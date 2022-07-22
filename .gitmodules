@@ -1,0 +1,3 @@
+[submodule "tests/cw-plus"]
+	path = tests/cw-plus
+	url = https://github.com/CosmWasm/cw-plus.git

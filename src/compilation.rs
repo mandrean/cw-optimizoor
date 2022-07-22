@@ -5,7 +5,7 @@ use cargo::{
     core::{
         compiler::{BuildConfig, CompileKind, CompileMode, CompileTarget, MessageFormat},
         resolver::CliFeatures,
-        Workspace,
+        Package, Workspace,
     },
     ops,
     ops::{CompileFilter, CompileOptions},
@@ -21,9 +21,9 @@ lazy_static! {
         CompileKind::Target(CompileTarget::new(TARGET_WASM32).expect("couldn't create target"));
 }
 
-/// Compiles the workspace and returns the created WASM artifacts.
-pub fn compile(compile_opts: &CompileOptions, ws: &Workspace) -> Result<Vec<PathBuf>> {
-    let wasm_paths = ops::compile(ws, compile_opts)?
+/// Compiles the workspace packages and returns the paths to the created WASM artifacts.
+pub fn compile(cfg: &Config, ws: &Workspace, packages: ops::Packages) -> Result<Vec<PathBuf>> {
+    let wasm_paths = ops::compile(ws, &compile_opts(cfg, packages)?)?
         .cdylibs
         .into_iter()
         .filter(|o| o.unit.kind.eq(&KIND_WASM32))
@@ -31,6 +31,26 @@ pub fn compile(compile_opts: &CompileOptions, ws: &Workspace) -> Result<Vec<Path
         .collect::<Vec<PathBuf>>();
 
     Ok(wasm_paths)
+}
+
+/// Variant of [`compile()`](fn@compile) which compiles each package individually in using ephemeral workspaces.
+pub fn compile_ephemerally(
+    cfg: &Config,
+    packages: Vec<Package>,
+) -> anyhow::Result<Vec<PathBuf>> {
+    packages
+        .into_iter()
+        .map(|p| {
+            (
+                p.package_id().name().to_string(),
+                Workspace::ephemeral(p, cfg, None, false),
+            )
+        })
+        .try_fold(vec![], |mut acc, (package, ws)| {
+            let mut res = compile(cfg, &ws?, ops::Packages::Packages(vec![package]))?;
+            acc.append(&mut res);
+            anyhow::Ok(acc)
+        })
 }
 
 /// Sets up the high-level compilation options.

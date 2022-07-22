@@ -1,7 +1,7 @@
 use std::{fs, fs::File, io::Read, path::PathBuf};
 
 use anyhow::Error;
-use cargo::{core::Workspace, ops};
+use cargo::{core::Workspace, ops, util::interning::InternedString};
 use path_absolutize::Absolutize;
 
 use crate::{compilation::*, ext::*, hashing::*, optimization::*};
@@ -11,21 +11,50 @@ pub mod ext;
 pub mod hashing;
 pub mod optimization;
 
+/// Runs cw-optimizoor against the manifest path.
 pub fn run(manifest_path: &PathBuf) -> anyhow::Result<(), Error> {
     let cfg = config()?;
     let ws = Workspace::new(manifest_path.as_ref(), &cfg).expect("couldn't create workspace");
-    let contracts = ws
-        .members()
-        .filter(|&p| p.manifest_path().starts_with(&ws.root().join("contracts")))
-        .map(|p| p.package_id().name().to_string())
-        .collect::<Vec<String>>();
-    let compile_opts = compile_opts(&cfg, ops::Packages::Packages(contracts))?;
     let output_dir = create_artifacts_dir(&ws)?;
 
+    // all ws members that are contracts
+    let all_contracts = ws
+        .members()
+        .filter(|&p| p.manifest_path().starts_with(&ws.root().join("contracts")))
+        .collect::<Vec<_>>();
+
+    // collect ws members with deps with feature = library to be compiled individually
+    let individual_contracts = all_contracts
+        .iter()
+        .filter(|p| {
+            p.dependencies()
+                .iter()
+                .any(|d| d.features().contains(&InternedString::from("library")))
+        })
+        .map(|&p| p.clone())
+        .collect::<Vec<_>>();
+
+    // package names of contracts to be compiled individually
+    let individual_names = individual_contracts
+        .iter()
+        .map(|p| p.package_id().name().to_string())
+        .collect::<Vec<_>>();
+
+    // package names of contracts to be compiled together
+    let common_names = all_contracts
+        .iter()
+        .map(|p| p.package_id().name().to_string())
+        .filter(|name| !individual_names.contains(name))
+        .collect::<Vec<_>>();
+
     println!("🧐️  Compiling .../{}", &manifest_path.rtake(2).display());
-    let intermediate_wasm_paths = compile(&compile_opts, &ws)?;
+    let mut intermediate_wasm_paths = compile(&cfg, &ws, ops::Packages::Packages(common_names))?;
+    let mut special_intermediate_wasm_paths = compile_ephemerally(&cfg, individual_contracts)?;
+    intermediate_wasm_paths.append(&mut special_intermediate_wasm_paths);
+
     println!("🤓  Intermediate checksums:");
     let mut prev_intermediate_checksums = String::new();
+
     File::options()
         .read(true)
         .write(true)
