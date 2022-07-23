@@ -2,13 +2,14 @@
 
 ![alt text](.img/wojak.png)
 
-A blazingly fast alternative to [CosmWasm/rust-optimizer] for compiling & optimizing CW smart contracts.
-
-
 <!---![Build Status](https://github.com/mandrean/cw-optimizoor/workflows/CI/badge.svg?branch=master)-->
 [![Latest version](https://img.shields.io/crates/v/cw-optimizoor.svg)](https://crates.io/crates/cw-optimizoor)
 [![Documentation](https://docs.rs/cw-optimizoor/badge.svg)](https://docs.rs/cw-optimizoor)
 ![License](https://img.shields.io/crates/l/cw-optimizoor.svg)
+
+A blazingly fast alternative to [CosmWasm/rust-optimizer] for compiling & optimizing CW smart contracts.
+
+It's primarily meant to speed up local development and testing.
 
 ### Features:
 
