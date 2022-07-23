@@ -33,7 +33,7 @@ pub fn compile(cfg: &Config, ws: &Workspace, packages: ops::Packages) -> Result<
     Ok(wasm_paths)
 }
 
-/// Variant of [`compile()`](fn@compile) which compiles each package individually in using ephemeral workspaces.
+/// Variant of [`compile()`](fn@compile) which compiles each package individually by using ephemeral workspaces.
 pub fn compile_ephemerally(
     cfg: &Config,
     packages: Vec<Package>,
