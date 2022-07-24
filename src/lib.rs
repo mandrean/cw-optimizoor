@@ -1,6 +1,6 @@
 use std::{fs, fs::File, io::Read, path::PathBuf};
 
-use anyhow::Error;
+use anyhow::{anyhow, Error};
 use cargo::{
     core::Workspace,
     ops,
@@ -27,6 +27,10 @@ pub fn run(manifest_path: &PathBuf) -> anyhow::Result<(), Error> {
         .members()
         .filter(|&p| p.manifest_path().starts_with(&ws.root().join("contracts")))
         .collect::<Vec<_>>();
+
+    if all_contracts.is_empty() {
+        return Err(anyhow!("No CW contracts found. Exiting."))
+    }
 
     // collect ws members with deps with feature = library to be compiled individually
     let individual_contracts = all_contracts
