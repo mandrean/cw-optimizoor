@@ -2,6 +2,10 @@ use std::{cell::RefCell, env, path::PathBuf};
 
 use anyhow::Result;
 use cargo::{
+    util::{
+        Filesystem,
+        interning::InternedString
+    },
     core::{
         compiler::{BuildConfig, CompileKind, CompileMode, CompileTarget, MessageFormat},
         resolver::CliFeatures,
@@ -9,8 +13,7 @@ use cargo::{
     },
     ops,
     ops::{CompileFilter, CompileOptions},
-    util::interning::InternedString,
-    Config,
+    Config
 };
 use lazy_static::lazy_static;
 
@@ -36,6 +39,7 @@ pub fn compile(cfg: &Config, ws: &Workspace, packages: ops::Packages) -> Result<
 /// Variant of [`compile()`](fn@compile) which compiles each package individually by using ephemeral workspaces.
 pub fn compile_ephemerally(
     cfg: &Config,
+    target_dir: Option<Filesystem>,
     packages: Vec<Package>,
 ) -> anyhow::Result<Vec<PathBuf>> {
     packages
@@ -43,7 +47,7 @@ pub fn compile_ephemerally(
         .map(|p| {
             (
                 p.package_id().name().to_string(),
-                Workspace::ephemeral(p, cfg, None, false),
+                Workspace::ephemeral(p, cfg, target_dir.clone(), false),
             )
         })
         .try_fold(vec![], |mut acc, (package, ws)| {
@@ -77,8 +81,7 @@ pub fn config() -> Result<Config> {
     // https://github.com/rust-lang/cargo/pull/8246
     env::set_var("RUSTFLAGS", "-C strip=symbols");
 
-    let mut cfg = Config::default()?;
-    cfg.configure(0, false, None, false, true, false, &None, &[], &[])?;
+    let cfg = Config::default()?;
 
     Ok(cfg)
 }
