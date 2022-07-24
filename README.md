@@ -22,9 +22,17 @@ It's primarily meant to speed up local development and testing.
 
 ### Installation
 
-Make sure you have `cmake` installed. On macOS run:
+Prerequisites (might or might not already be installed):
 ```sh
-$ brew install cmake
+# Ubuntu
+$ sudo apt install -y cmake pkg-config libssl-dev clang
+
+# Fedora
+$ sudo dnf install -y cmake openssl-devel clang
+
+# macOS
+$ xcode-select --install # clang
+$ brew install cmake pkg-config
 ```
 
 Then:
