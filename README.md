@@ -16,7 +16,7 @@ It's primarily meant to speed up local development and testing.
 - **Fast** - especially in workspaces with many contracts
 - Uses same optimizations as `rust-optimizer` by default
 - No dependency on Docker
-- Supports both single contracts and workspaces/monorepos
+- Supports both single- & multi-contract workspaces
 - Written as a [cargo subcommand]
 - Cross-platform, cross-arch
 
