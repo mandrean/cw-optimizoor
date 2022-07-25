@@ -2,18 +2,14 @@ use std::{cell::RefCell, env, path::PathBuf};
 
 use anyhow::Result;
 use cargo::{
-    util::{
-        Filesystem,
-        interning::InternedString
-    },
     core::{
         compiler::{BuildConfig, CompileKind, CompileMode, CompileTarget, MessageFormat},
         resolver::CliFeatures,
         Package, Workspace,
     },
-    ops,
-    ops::{CompileFilter, CompileOptions},
-    Config
+    ops::{self, CompileFilter, CompileOptions},
+    util::{interning::InternedString, Filesystem},
+    Config,
 };
 use lazy_static::lazy_static;
 

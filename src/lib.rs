@@ -1,4 +1,8 @@
-use std::{fs, fs::File, io::Read, path::PathBuf};
+use std::{
+    fs::{self, File},
+    io::Read,
+    path::{Path, PathBuf},
+};
 
 use anyhow::{anyhow, Error};
 use cargo::{
@@ -20,10 +24,11 @@ const CONTRACTS: &str = "contracts";
 const LIBRARY: &str = "library";
 const ARTIFACTS: &str = "contracts";
 
-/// Runs cw-optimizoor against the manifest path.
-pub fn run(manifest_path: &PathBuf) -> anyhow::Result<(), Error> {
+/// Runs cw-optimizoor against the workspace path.
+pub fn run<P: AsRef<Path> + TakeExt<PathBuf>>(workspace_path: P) -> anyhow::Result<(), Error> {
+    let manifest_path = find_manifest(&workspace_path)?;
     let cfg = config()?;
-    let ws = Workspace::new(manifest_path.as_ref(), &cfg).expect("couldn't create workspace");
+    let ws = Workspace::new(manifest_path.as_path(), &cfg).expect("couldn't create workspace");
     let output_dir = create_artifacts_dir(&ws)?;
     let shared_target_dir = Filesystem::new(ws.root().to_path_buf().join(TARGET));
 
@@ -97,6 +102,29 @@ pub fn run(manifest_path: &PathBuf) -> anyhow::Result<(), Error> {
     );
 
     Ok(())
+}
+
+/// Find the Cargo.toml if a directory path is passed in
+pub fn find_manifest<P: AsRef<Path>>(workspace_path: P) -> anyhow::Result<PathBuf> {
+    let manifest_path = match workspace_path.as_ref().absolutize()?.to_path_buf() {
+        absolute_path if absolute_path.ends_with("Cargo.toml") => absolute_path,
+        absolute_path if absolute_path.is_dir() => absolute_path.join("Cargo.toml"),
+        absolute_path => {
+            return Err(anyhow!(
+                "Invalid workspace path: {}",
+                absolute_path.display()
+            ))
+        }
+    };
+
+    if !manifest_path.exists() {
+        return Err(anyhow!(
+            "Couldn't locate manifest {}",
+            manifest_path.display()
+        ));
+    }
+
+    Ok(manifest_path)
 }
 
 /// Creates the artifacts dir if it doesn't exist.

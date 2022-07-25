@@ -1,6 +1,6 @@
 use anyhow::Result;
 use clap::Parser;
-use path_absolutize::Absolutize;
+use std::env;
 
 /// cw-optimizoor
 #[derive(Debug, Parser)]
@@ -14,19 +14,17 @@ enum Cargo {
 #[derive(clap::Args, Debug)]
 #[clap(author, version, about, long_about = None)]
 struct CwOptimizoor {
-    /// Path to the Cargo.toml
+    /// Path to the workspace dir or Cargo.toml
     #[clap(value_parser)]
-    manifest_path: Option<std::path::PathBuf>,
+    workspace_path: Option<std::path::PathBuf>,
 }
 
 fn main() -> Result<()> {
     let Cargo::CwOptimizoor(args) = Cargo::parse();
 
-    let manifest_path = args
-        .manifest_path
-        .expect("missing manifest path")
-        .absolutize()?
-        .to_path_buf();
+    let workspace_path = args
+        .workspace_path
+        .unwrap_or_else(|| env::current_dir().expect("couldn't get current directory"));
 
-    cw_optimizoor::run(&manifest_path)
+    cw_optimizoor::run(workspace_path)
 }
