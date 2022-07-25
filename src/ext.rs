@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 pub trait TakeExt<R> {
     /// Returns the first n items in `R`.
@@ -70,6 +70,42 @@ impl TakeExt<PathBuf> for PathBuf {
             .rskip(n)
             .iter()
             .fold(PathBuf::new(), |acc, i| acc.join(i))
+    }
+}
+
+impl TakeExt<PathBuf> for dyn AsRef<Path> {
+    fn ltake(&self, n: usize) -> PathBuf {
+        self.as_ref().to_path_buf().ltake(n)
+    }
+
+    fn rtake(&self, n: usize) -> PathBuf {
+        self.as_ref().to_path_buf().rtake(n)
+    }
+
+    fn lskip(&self, n: usize) -> PathBuf {
+        self.as_ref().to_path_buf().lskip(n)
+    }
+
+    fn rskip(&self, n: usize) -> PathBuf {
+        self.as_ref().to_path_buf().rskip(n)
+    }
+}
+
+impl TakeExt<PathBuf> for &Path {
+    fn ltake(&self, n: usize) -> PathBuf {
+        self.to_path_buf().ltake(n)
+    }
+
+    fn rtake(&self, n: usize) -> PathBuf {
+        self.to_path_buf().rtake(n)
+    }
+
+    fn lskip(&self, n: usize) -> PathBuf {
+        self.to_path_buf().lskip(n)
+    }
+
+    fn rskip(&self, n: usize) -> PathBuf {
+        self.to_path_buf().rskip(n)
     }
 }
 

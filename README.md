@@ -46,15 +46,17 @@ $ cargo install cw-optimizoor
 $ cargo cw-optimizoor -h
 
 USAGE:
-    cargo cw-optimizoor [MANIFEST_PATH]
+    cargo cw-optimizoor [WORKSPACE_PATH]
 
 ARGS:
-    <MANIFEST_PATH>    Path to the Cargo.toml
+    <WORKSPACE_PATH>    Path to the workspace dir or Cargo.toml
 ```
 
 ### Example
 ```sh
-$ cargo cw-optimizoor monorepo/Cargo.toml
+$ cargo cw-optimizoor              # defaults to the current dir
+# cargo cw-optimizoor Cargo.toml   # or this for pointing directly at a Cargo manifest
+# cargo cw-optimizoor .            # or this for the current dir
 
 🧐️  Compiling .../monorepo/Cargo.toml
     Finished release [optimized] target(s) in 0.10s

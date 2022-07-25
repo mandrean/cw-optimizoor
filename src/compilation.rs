@@ -2,21 +2,18 @@ use std::{cell::RefCell, env, path::PathBuf};
 
 use anyhow::Result;
 use cargo::{
-    util::{
-        Filesystem,
-        interning::InternedString
-    },
     core::{
         compiler::{BuildConfig, CompileKind, CompileMode, CompileTarget, MessageFormat},
         resolver::CliFeatures,
         Package, Workspace,
     },
-    ops,
-    ops::{CompileFilter, CompileOptions},
-    Config
+    ops::{self, CompileFilter, CompileOptions},
+    util::{interning::InternedString, Filesystem},
+    Config,
 };
 use lazy_static::lazy_static;
 
+const RUSTFLAGS: &str = "RUSTFLAGS";
 const PROFILE_RELEASE: &str = "release";
 const TARGET_WASM32: &str = "wasm32-unknown-unknown";
 lazy_static! {
@@ -79,7 +76,7 @@ pub fn compile_opts(config: &Config, spec: ops::Packages) -> Result<CompileOptio
 pub fn config() -> Result<Config> {
     // https://github.com/rust-lang/rust/issues/71757
     // https://github.com/rust-lang/cargo/pull/8246
-    env::set_var("RUSTFLAGS", "-C strip=symbols");
+    env::set_var(RUSTFLAGS, "-C strip=symbols");
 
     let cfg = Config::default()?;
 
