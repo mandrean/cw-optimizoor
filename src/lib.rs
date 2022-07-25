@@ -15,21 +15,26 @@ pub mod ext;
 pub mod hashing;
 pub mod optimization;
 
+const TARGET: &str = "target";
+const CONTRACTS: &str = "contracts";
+const LIBRARY: &str = "library";
+const ARTIFACTS: &str = "contracts";
+
 /// Runs cw-optimizoor against the manifest path.
 pub fn run(manifest_path: &PathBuf) -> anyhow::Result<(), Error> {
     let cfg = config()?;
     let ws = Workspace::new(manifest_path.as_ref(), &cfg).expect("couldn't create workspace");
     let output_dir = create_artifacts_dir(&ws)?;
-    let shared_target_dir = Filesystem::new(ws.root().to_path_buf().join("target"));
+    let shared_target_dir = Filesystem::new(ws.root().to_path_buf().join(TARGET));
 
     // all ws members that are contracts
     let all_contracts = ws
         .members()
-        .filter(|&p| p.manifest_path().starts_with(&ws.root().join("contracts")))
+        .filter(|&p| p.manifest_path().starts_with(&ws.root().join(CONTRACTS)))
         .collect::<Vec<_>>();
 
     if all_contracts.is_empty() {
-        return Err(anyhow!("No CW contracts found. Exiting."))
+        return Err(anyhow!("No CW contracts found. Exiting."));
     }
 
     // collect ws members with deps with feature = library to be compiled individually
@@ -38,7 +43,7 @@ pub fn run(manifest_path: &PathBuf) -> anyhow::Result<(), Error> {
         .filter(|p| {
             p.dependencies()
                 .iter()
-                .any(|d| d.features().contains(&InternedString::from("library")))
+                .any(|d| d.features().contains(&InternedString::from(LIBRARY)))
         })
         .map(|&p| p.clone())
         .collect::<Vec<_>>();
@@ -96,7 +101,7 @@ pub fn run(manifest_path: &PathBuf) -> anyhow::Result<(), Error> {
 
 /// Creates the artifacts dir if it doesn't exist.
 fn create_artifacts_dir(ws: &Workspace) -> anyhow::Result<PathBuf> {
-    let output_dir = ws.root().absolutize()?.to_path_buf().join("artifacts");
+    let output_dir = ws.root().absolutize()?.to_path_buf().join(ARTIFACTS);
     fs::create_dir_all(&output_dir)?;
 
     Ok(output_dir)
