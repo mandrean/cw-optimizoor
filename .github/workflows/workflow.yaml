@@ -67,6 +67,10 @@ jobs:
       - name: Checkout submodules
         run: git submodule update --init --recursive
 
+      - name: Install WABT
+        run: |
+          sudo apt-get update
+          sudo apt-get install wabt
       - name: Setup toolchain
         uses: actions-rs/toolchain@v1
         with:
