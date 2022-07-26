@@ -22,7 +22,7 @@ pub mod optimization;
 const TARGET: &str = "target";
 const CONTRACTS: &str = "contracts";
 const LIBRARY: &str = "library";
-const ARTIFACTS: &str = "contracts";
+const ARTIFACTS: &str = "artifacts";
 
 /// Runs cw-optimizoor against the workspace path.
 pub fn run<P: AsRef<Path> + TakeExt<PathBuf>>(workspace_path: P) -> anyhow::Result<(), Error> {
