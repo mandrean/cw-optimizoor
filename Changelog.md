@@ -1,3 +1,13 @@
+<a name="v0.5.1"></a>
+## v0.5.1 (2022-07-26)
+
+
+#### Bug Fixes
+
+*   Artifacts should be put in artifacts/ dir ([4d5a8665](4d5a8665))
+
+
+
 <a name="v0.5.0"></a>
 ## v0.5.0 (2022-07-25)
 
