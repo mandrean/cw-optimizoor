@@ -2,7 +2,7 @@
 
 ![alt text](.img/wojak.png)
 
-<!---![Build Status](https://github.com/mandrean/cw-optimizoor/workflows/CI/badge.svg?branch=master)-->
+[![Build Status](https://github.com/mandrean/cw-optimizoor/workflows/CI/badge.svg?branch=master)](https://github.com/mandrean/cw-optimizoor/actions/workflows/workflow.yaml)
 [![Latest version](https://img.shields.io/crates/v/cw-optimizoor.svg)](https://crates.io/crates/cw-optimizoor)
 [![Documentation](https://docs.rs/cw-optimizoor/badge.svg)](https://docs.rs/cw-optimizoor)
 ![License](https://img.shields.io/crates/l/cw-optimizoor.svg)
