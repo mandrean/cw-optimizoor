@@ -18,6 +18,7 @@ pub mod compilation;
 pub mod ext;
 pub mod hashing;
 pub mod optimization;
+pub mod self_updater;
 
 const TARGET: &str = "target";
 const CONTRACTS: &str = "contracts";
