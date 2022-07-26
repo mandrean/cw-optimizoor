@@ -97,8 +97,8 @@ pub fn run<P: AsRef<Path> + TakeExt<PathBuf>>(workspace_path: P) -> anyhow::Resu
     write_checksums(&final_wasm_paths, &output_dir.join("checksums.txt"))?;
 
     println!(
-        "🫡  Done. Saved optimized artifacts to:\n   {}/artifacts",
-        ws.root().display()
+        "🫡  Done. Saved optimized artifacts to:\n   {}",
+        ws.root().join(ARTIFACTS).display()
     );
 
     Ok(())
