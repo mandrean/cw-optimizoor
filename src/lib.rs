@@ -26,7 +26,9 @@ const LIBRARY: &str = "library";
 const ARTIFACTS: &str = "artifacts";
 
 /// Runs cw-optimizoor against the workspace path.
-pub fn run<P: AsRef<Path> + TakeExt<PathBuf>>(workspace_path: P) -> anyhow::Result<(), Error> {
+pub async fn run<P: AsRef<Path> + TakeExt<PathBuf>>(
+    workspace_path: P,
+) -> anyhow::Result<(), Error> {
     let manifest_path = find_manifest(&workspace_path)?;
     let cfg = config()?;
     let ws = Workspace::new(manifest_path.as_path(), &cfg).expect("couldn't create workspace");

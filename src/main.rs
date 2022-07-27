@@ -2,6 +2,7 @@ use std::env;
 
 use anyhow::Result;
 use clap::Parser;
+use futures::TryFutureExt;
 use semver::Version;
 
 use cw_optimizoor::self_updater;
@@ -35,11 +36,11 @@ async fn main() -> Result<()> {
         .unwrap_or_else(|| env::current_dir().expect("couldn't get current directory"));
 
     let current_version = PKG_VERSION.parse::<Version>()?;
-    let latest_version = self_updater::fetch_latest_version(PKG_NAME)
-        .await
-        .unwrap_or_else(|_| current_version.clone());
+    let (latest_version, _) = tokio::join!(
+        self_updater::fetch_latest_version(PKG_NAME).unwrap_or_else(|_| current_version.clone()),
+        cw_optimizoor::run(workspace_path)
+    );
 
-    cw_optimizoor::run(workspace_path)?;
     self_updater::check_version(PKG_NAME, &current_version, &latest_version);
 
     Ok(())
