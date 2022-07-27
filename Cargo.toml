@@ -1,6 +1,6 @@
 [package]
 name = "cw-optimizoor"
-version = "0.6.0"
+version = "0.6.1"
 authors = ["Sebastian Mandrean <sebastian.mandrean@gmail.com>"]
 edition = "2021"
 description = "A blazingly fast compiling & optimization tool for CosmWasm smart contracts."
