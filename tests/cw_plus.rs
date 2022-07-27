@@ -7,11 +7,11 @@ use std::{
     process::{Command, Stdio},
 };
 
-#[test]
-fn it_can_compile_repo() -> anyhow::Result<()> {
+#[tokio::test]
+async fn it_can_compile_repo() -> anyhow::Result<()> {
     let cwd = env::current_dir()?;
     let manifest_path = PathBuf::from("tests/cw-plus/Cargo.toml");
-    let _ = cw_optimizoor::run(manifest_path.as_path()).expect("optimizoor run failed");
+    let _ = cw_optimizoor::run(manifest_path.as_path()).await?;
 
     let wasm_pattern = &*cwd
         .join("tests/cw-plus/artifacts/*.wasm")

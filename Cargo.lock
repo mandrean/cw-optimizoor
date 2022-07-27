@@ -500,6 +500,7 @@ dependencies = [
  "clap",
  "colour",
  "crates_io_api",
+ "futures",
  "glob",
  "hex 0.4.3",
  "itertools",
