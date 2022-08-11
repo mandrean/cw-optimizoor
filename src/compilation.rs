@@ -1,4 +1,4 @@
-use std::{cell::RefCell, env, path::PathBuf};
+use std::{cell::RefCell, env, path::PathBuf, thread};
 
 use anyhow::Result;
 use cargo::{
@@ -89,7 +89,9 @@ pub fn build_cfg(config: &Config) -> Result<BuildConfig> {
     let requested_kinds =
         CompileKind::from_requested_targets(config, &[String::from(TARGET_WASM32)])?;
 
-    let jobs = cfg.jobs.unwrap_or(::num_cpus::get() as u32);
+    let jobs = cfg
+        .jobs
+        .unwrap_or(thread::available_parallelism()?.get() as u32);
     if jobs == 0 {
         anyhow::bail!("jobs may not be 0");
     }
