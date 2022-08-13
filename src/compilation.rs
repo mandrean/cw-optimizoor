@@ -8,7 +8,7 @@ use cargo::{
         Package, Workspace,
     },
     ops::{self, CompileFilter, CompileOptions},
-    util::{interning::InternedString, Filesystem},
+    util::interning::InternedString,
     Config,
 };
 use lazy_static::lazy_static;
@@ -34,17 +34,13 @@ pub fn compile(cfg: &Config, ws: &Workspace, packages: ops::Packages) -> Result<
 }
 
 /// Variant of [`compile()`](fn@compile) which compiles each package individually by using ephemeral workspaces.
-pub fn compile_ephemerally(
-    cfg: &Config,
-    target_dir: Option<Filesystem>,
-    packages: Vec<Package>,
-) -> anyhow::Result<Vec<PathBuf>> {
+pub fn compile_ephemerally(cfg: &Config, packages: Vec<Package>) -> anyhow::Result<Vec<PathBuf>> {
     packages
         .into_iter()
         .map(|p| {
             (
                 p.package_id().name().to_string(),
-                Workspace::ephemeral(p, cfg, target_dir.clone(), false),
+                Workspace::ephemeral(p, cfg, None, false),
             )
         })
         .try_fold(vec![], |mut acc, (package, ws)| {

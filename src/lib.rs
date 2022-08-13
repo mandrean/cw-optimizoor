@@ -5,11 +5,7 @@ use std::{
 };
 
 use anyhow::{anyhow, Error};
-use cargo::{
-    core::Workspace,
-    ops,
-    util::{interning::InternedString, Filesystem},
-};
+use cargo::{core::Workspace, ops, util::interning::InternedString};
 use path_absolutize::Absolutize;
 
 use crate::{compilation::*, ext::*, hashing::*, optimization::*};
@@ -20,7 +16,6 @@ pub mod hashing;
 pub mod optimization;
 pub mod self_updater;
 
-const TARGET: &str = "target";
 const CONTRACTS: &str = "contracts";
 const LIBRARY: &str = "library";
 const ARTIFACTS: &str = "artifacts";
@@ -33,7 +28,6 @@ pub async fn run<P: AsRef<Path> + TakeExt<PathBuf>>(
     let cfg = config()?;
     let ws = Workspace::new(manifest_path.as_path(), &cfg).expect("couldn't create workspace");
     let output_dir = create_artifacts_dir(&ws)?;
-    let shared_target_dir = Filesystem::new(ws.root().to_path_buf().join(TARGET));
 
     // all ws members that are contracts
     let all_contracts = ws
@@ -71,8 +65,7 @@ pub async fn run<P: AsRef<Path> + TakeExt<PathBuf>>(
 
     println!("🧐️  Compiling .../{}", &manifest_path.rtake(2).display());
     let mut intermediate_wasm_paths = compile(&cfg, &ws, ops::Packages::Packages(common_names))?;
-    let mut special_intermediate_wasm_paths =
-        compile_ephemerally(&cfg, Some(shared_target_dir), individual_contracts)?;
+    let mut special_intermediate_wasm_paths = compile_ephemerally(&cfg, individual_contracts)?;
     intermediate_wasm_paths.append(&mut special_intermediate_wasm_paths);
 
     println!("🤓  Intermediate checksums:");
