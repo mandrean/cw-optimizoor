@@ -33,3 +33,14 @@ rayon = "1.5"
 ring = "0.16"
 semver = "1"
 tokio = { version = "1", features = ["rt", "macros"] }
+
+[dev-dependencies]
+assert_cmd = "2"
+async-trait = "0.1"
+cucumber = { version = "0.13", features = ["macros"]}
+predicates = "2"
+
+[[test]]
+name = "e2e"
+path = "tests/cucumber.rs"
+harness = false
