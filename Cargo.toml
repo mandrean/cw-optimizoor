@@ -18,7 +18,7 @@ path = "src/main.rs"
 [dependencies]
 anyhow = "1"
 binaryen = "0.12"
-cargo = "0.63"
+cargo = "0.64"
 cargo-util = "0.2"
 clap = { version = "3", features = ["derive"] }
 colour = "0.6"
