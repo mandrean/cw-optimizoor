@@ -38,7 +38,9 @@ tokio = { version = "1", features = ["rt", "macros"] }
 assert_cmd = "2"
 async-trait = "0.1"
 cucumber = { version = "0.13", features = ["macros"]}
+petname = "1"
 predicates = "2"
+thiserror = "1"
 
 [[test]]
 name = "e2e"
