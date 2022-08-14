@@ -120,6 +120,23 @@ async fn makes_a_change_in_contract(world: &mut CwWorld, name: String) -> anyhow
     Ok(())
 }
 
+#[given(expr = "the user deletes the artifact {string}")]
+async fn deletes_str_artifact(world: &mut CwWorld, name: String) -> anyhow::Result<()> {
+    let wasm_pattern = world
+        .ws_root
+        .as_path()
+        .join(format!("artifacts/{}*.wasm", &name))
+        .to_str()
+        .unwrap_or_default()
+        .to_string();
+    let matches: Vec<PathBuf> = glob(&wasm_pattern)?.try_collect()?;
+    match matches.first() {
+        Some(path) => fs::remove_file(path)?,
+        None => panic!("couldn't find any artifact matching \"{}\"", name),
+    }
+    Ok(())
+}
+
 #[then(expr = "{int} wasm files exist in the artifacts dir")]
 async fn n_wasm_artficats(world: &mut CwWorld, n: usize) -> anyhow::Result<()> {
     let wasm_pattern = world
