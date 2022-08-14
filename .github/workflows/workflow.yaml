@@ -92,7 +92,20 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-
 
-      - name: Test
+      - name: Run unit tests
         uses: actions-rs/cargo@v1
         with:
           command: test
+          args: --lib
+
+      - name: Run integration tests
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --test integration
+
+      - name: Run e2e tests
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --test e2e
