@@ -120,6 +120,23 @@ async fn makes_a_change_in_contract(world: &mut CwWorld, name: String) -> anyhow
     Ok(())
 }
 
+#[given(expr = "the user deletes the artifact {string}")]
+async fn deletes_str_artifact(world: &mut CwWorld, name: String) -> anyhow::Result<()> {
+    let wasm_pattern = world
+        .ws_root
+        .as_path()
+        .join(format!("artifacts/{}*.wasm", &name))
+        .to_str()
+        .unwrap_or_default()
+        .to_string();
+    let matches: Vec<PathBuf> = glob(&wasm_pattern)?.try_collect()?;
+    match matches.first() {
+        Some(path) => fs::remove_file(path)?,
+        None => panic!("couldn't find any artifact matching \"{}\"", name),
+    }
+    Ok(())
+}
+
 #[then(expr = "{int} wasm files exist in the artifacts dir")]
 async fn n_wasm_artficats(world: &mut CwWorld, n: usize) -> anyhow::Result<()> {
     let wasm_pattern = world
@@ -163,22 +180,22 @@ async fn each_artifact_contains_str_function(
     Ok(())
 }
 
-#[then(expr = "only {string} is reoptimized")]
-async fn only_str_is_reoptimized(world: &mut CwWorld, name: String) -> anyhow::Result<()> {
-    // TODO: verify that the checksum changed
+#[then(expr = "{int} contracts are optimized")]
+async fn n_optimizations(world: &mut CwWorld, n: usize) -> anyhow::Result<()> {
+    // TODO: verify that the checksum(s) didn't change
     world
         .cmd_output
         .as_ref()
         .expect("missing cmd output")
         .clone()
         .assert()
-        .stdout(predicate::str::contains(format!("{} was optimized", name)));
+        .stdout(predicate::str::contains("was optimized").count(n));
 
     Ok(())
 }
 
-#[then(expr = "the other {int} are skipped")]
-async fn other_n_skipped(world: &mut CwWorld, n: usize) -> anyhow::Result<()> {
+#[then(expr = "{int} contracts are unchanged and skipped")]
+async fn n_optimizations_cached(world: &mut CwWorld, n: usize) -> anyhow::Result<()> {
     // TODO: verify that the checksum(s) didn't change
     world
         .cmd_output
@@ -187,6 +204,20 @@ async fn other_n_skipped(world: &mut CwWorld, n: usize) -> anyhow::Result<()> {
         .clone()
         .assert()
         .stdout(predicate::str::contains("is unchanged. Skipping").count(n));
+
+    Ok(())
+}
+
+#[then(expr = "{string} is reoptimized")]
+async fn str_is_reoptimized(world: &mut CwWorld, name: String) -> anyhow::Result<()> {
+    // TODO: verify that the checksum changed
+    world
+        .cmd_output
+        .as_ref()
+        .expect("missing cmd output")
+        .clone()
+        .assert()
+        .stdout(predicate::str::contains(format!("{} was optimized", name)));
 
     Ok(())
 }
