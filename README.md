@@ -22,23 +22,31 @@ It's primarily meant to speed up local development and testing.
 
 ### Installation
 
-Prerequisites (might or might not already be installed):
+```sh
+$ cargo install cw-optimizoor
+```
+
+You might also need any of the following:
+
+#### Linux
 ```sh
 # Ubuntu
 $ sudo apt install -y cmake pkg-config libssl-dev clang
 
 # Fedora
 $ sudo dnf install -y cmake openssl-devel clang
+```
 
-# macOS
+#### macOS
+```sh
 $ xcode-select --install # clang
 $ brew install cmake pkg-config
 ```
 
-Then:
-```sh
-$ cargo install cw-optimizoor
-```
+#### Windows
+- [Visual Studio C++, Clang & Build Tools]
+- [CMake]
+- [Python]
 
 ### Usage
 
@@ -89,3 +97,6 @@ $ cargo cw-optimizoor              # defaults to the current dir
 [CosmWasm/rust-optimizer]: https://github.com/CosmWasm/rust-optimizer
 [CosmWasm]: https://cosmwasm.com
 [cargo subcommand]: https://doc.rust-lang.org/cargo/reference/external-tools.html#custom-subcommands
+[Visual Studio C++, Clang & Build Tools]: https://visualstudio.microsoft.com/downloads/
+[CMake]: https://cmake.org/download/
+[Python]: https://www.python.org/downloads/windows/
