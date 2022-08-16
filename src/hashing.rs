@@ -1,29 +1,22 @@
 use std::{
     fs::File,
+    io,
     io::{BufReader, BufWriter, Read, Write},
     path::PathBuf,
 };
 
 use anyhow::{anyhow, Result};
 use hex::ToHex;
-use ring::digest::{Context, Digest, SHA256};
+use sha2::{Digest, Sha256};
 
 use crate::ext::TakeExt;
 
 /// Calculates the SHA-256 digest of a buffer.
-pub fn sha256_digest<R: Read>(mut reader: R) -> Result<Digest> {
-    let mut context = Context::new(&SHA256);
-    let mut buffer = [0; 1024];
-
-    loop {
-        let count = reader.read(&mut buffer)?;
-        if count == 0 {
-            break;
-        }
-        context.update(&buffer[..count]);
-    }
-
-    Ok(context.finish())
+pub fn sha256_digest<R: Read>(mut reader: R) -> Result<String> {
+    let mut hasher = Sha256::new();
+    let _ = io::copy(&mut reader, &mut hasher)?;
+    let digest = hasher.finalize().encode_hex::<String>();
+    Ok(digest)
 }
 
 /// Calculates the SHA-256 checksums of the provided WASM artifacts, and outputs them to a file.
@@ -50,10 +43,9 @@ pub fn write_checksums(wasm_paths: &[PathBuf], output_file: &PathBuf) -> Result<
 pub fn checksum(wasm_path: &PathBuf) -> Result<String> {
     let input = File::open(wasm_path)?;
     let reader = BufReader::new(input);
-    let digest = sha256_digest(reader)?;
     let checksum = format!(
         "{}  {}\n",
-        &digest.encode_hex::<String>(),
+        sha256_digest(reader)?,
         wasm_path.rtake(1).display(),
     );
 
