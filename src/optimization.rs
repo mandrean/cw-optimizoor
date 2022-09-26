@@ -10,7 +10,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Context, Result};
 use binaryen::Module;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
@@ -22,12 +22,17 @@ pub fn incremental_optimizations(
     prev_intermediate_checksums: String,
 ) -> Result<Vec<PathBuf>> {
     let mut checksums = String::new();
+    let checksums_path = output_dir.join("checksums.txt");
     File::options()
         .read(true)
         .write(true)
         .create(true)
-        .open(&output_dir.join("checksums.txt"))?
-        .read_to_string(&mut checksums)?;
+        .open(&checksums_path)?
+        .read_to_string(&mut checksums)
+        .context(format!(
+            "Failed read from {path}",
+            path = checksums_path.display()
+        ))?;
     let final_wasm_paths = intermediate_wasm_paths
         .par_iter()
         .map(|wasm_path| {
