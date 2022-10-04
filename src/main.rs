@@ -36,10 +36,12 @@ async fn main() -> Result<()> {
         .unwrap_or_else(|| env::current_dir().expect("couldn't get current directory"));
 
     let current_version = PKG_VERSION.parse::<Version>()?;
-    let (latest_version, _) = tokio::join!(
+    let (latest_version, run_res) = tokio::join!(
         self_updater::fetch_latest_version(PKG_NAME).unwrap_or_else(|_| current_version.clone()),
         cw_optimizoor::run(workspace_path)
     );
+
+    run_res?;
 
     self_updater::check_version(PKG_NAME, &current_version, &latest_version);
 
