@@ -56,9 +56,7 @@ pub fn compile_opts(config: &Config, spec: ops::Packages) -> Result<CompileOptio
         build_config: build_cfg(config)?,
         cli_features: CliFeatures::new_all(false),
         spec,
-        filter: CompileFilter::Default {
-            required_features_filterable: false,
-        },
+        filter: CompileFilter::lib_only(),
         target_rustdoc_args: None,
         target_rustc_args: None,
         target_rustc_crate_types: None,
