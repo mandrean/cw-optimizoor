@@ -83,9 +83,10 @@ pub fn build_cfg(config: &Config) -> Result<BuildConfig> {
     let requested_kinds =
         CompileKind::from_requested_targets(config, &[String::from(TARGET_WASM32)])?;
 
-    let jobs = cfg
+    let jobs: u32 = cfg
         .jobs
-        .unwrap_or(thread::available_parallelism()?.get() as u32);
+        .unwrap_or(thread::available_parallelism()?.get() as i32)
+        .try_into()?;
     if jobs == 0 {
         anyhow::bail!("jobs may not be 0");
     }
