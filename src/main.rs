@@ -56,7 +56,7 @@ impl RunContextExt for RunContext {
                         .map(|s| s.to_string())
                         .collect::<Vec<_>>()
                 })
-                .unwrap_or(vec![]),
+                .unwrap_or_default(),
             all_features: args.all_features,
             no_default_features: args.no_default_features,
         }

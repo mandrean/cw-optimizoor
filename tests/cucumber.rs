@@ -122,7 +122,7 @@ async fn makes_a_change_in_contract(world: &mut CwWorld, name: String) -> anyhow
         .write(true)
         .truncate(true)
         .open(&filename)?;
-    file.write(replaced.as_bytes())?;
+    file.write_all(replaced.as_bytes())?;
 
     Ok(())
 }

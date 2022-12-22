@@ -30,7 +30,7 @@ pub fn compile(
     ws: &Workspace,
     packages: ops::Packages,
 ) -> Result<Vec<PathBuf>> {
-    let wasm_paths = ops::compile(ws, &compile_opts(&ctx, cfg, packages)?)?
+    let wasm_paths = ops::compile(ws, &compile_opts(ctx, cfg, packages)?)?
         .cdylibs
         .into_iter()
         .filter(|o| o.unit.kind.eq(&KIND_WASM32))
@@ -55,7 +55,7 @@ pub fn compile_ephemerally(
             )
         })
         .try_fold(vec![], |mut acc, (package, ws)| {
-            let mut res = compile(&ctx, cfg, &ws?, ops::Packages::Packages(vec![package]))?;
+            let mut res = compile(ctx, cfg, &ws?, ops::Packages::Packages(vec![package]))?;
             acc.append(&mut res);
             anyhow::Ok(acc)
         })
