@@ -18,9 +18,9 @@ path = "src/main.rs"
 [dependencies]
 anyhow = "1"
 binaryen = "0.12"
-cargo = "0.65"
+cargo = "0.67"
 cargo-util = "0.2"
-clap = { version = "3", features = ["derive"] }
+clap = { version = "4", features = ["derive"] }
 colour = "0.6"
 crates_io_api = "0.8"
 futures = "0.3"
