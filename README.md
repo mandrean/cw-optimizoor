@@ -72,9 +72,10 @@ Options:
 
 ### Example
 ```sh
-$ cargo cw-optimizoor              # defaults to the current dir
-# cargo cw-optimizoor Cargo.toml   # or this for pointing directly at a Cargo manifest
-# cargo cw-optimizoor .            # or this for the current dir
+$ cargo cw-optimizoor                        # defaults to the current dir
+# cargo cw-optimizoor Cargo.toml             # or this for pointing directly at a Cargo manifest
+# cargo cw-optimizoor .                      # or this for the current dir
+# cargo cw-optimizoor -f feature_1,feature_2 # toggle 'feature_1' and 'feature_2'
 
 🧐️  Compiling .../monorepo/Cargo.toml
     Finished release [optimized] target(s) in 0.10s
