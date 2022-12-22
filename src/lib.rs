@@ -20,11 +20,17 @@ const CONTRACTS: &str = "contracts";
 const LIBRARY: &str = "library";
 const ARTIFACTS: &str = "artifacts";
 
+/// The cw-optimizoor run context.
+pub struct RunContext {
+    pub workspace_path: PathBuf,
+    pub features: Vec<String>,
+    pub all_features: bool,
+    pub no_default_features: bool,
+}
+
 /// Runs cw-optimizoor against the workspace path.
-pub async fn run<P: AsRef<Path> + TakeExt<PathBuf>>(
-    workspace_path: P,
-) -> anyhow::Result<(), Error> {
-    let manifest_path = find_manifest(&workspace_path)?;
+pub async fn run(ctx: RunContext) -> anyhow::Result<(), Error> {
+    let manifest_path = find_manifest(&ctx.workspace_path)?;
     let cfg = config()?;
     let ws = Workspace::new(manifest_path.as_path(), &cfg).expect("couldn't create workspace");
     let output_dir = create_artifacts_dir(&ws)?;
@@ -64,8 +70,10 @@ pub async fn run<P: AsRef<Path> + TakeExt<PathBuf>>(
         .collect::<Vec<_>>();
 
     println!("🧐️  Compiling .../{}", &manifest_path.rtake(2).display());
-    let mut intermediate_wasm_paths = compile(&cfg, &ws, ops::Packages::Packages(common_names))?;
-    let mut special_intermediate_wasm_paths = compile_ephemerally(&cfg, individual_contracts)?;
+    let mut intermediate_wasm_paths =
+        compile(&ctx, &cfg, &ws, ops::Packages::Packages(common_names))?;
+    let mut special_intermediate_wasm_paths =
+        compile_ephemerally(&ctx, &cfg, individual_contracts)?;
     intermediate_wasm_paths.append(&mut special_intermediate_wasm_paths);
 
     println!("🤓  Intermediate checksums:");
