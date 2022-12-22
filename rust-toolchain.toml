@@ -1,0 +1,5 @@
+[toolchain]
+channel = "1.66"
+components = [ "rustfmt", "rustc-dev" ]
+profile = "default"
+targets = [ "wasm32-unknown-unknown" ]
