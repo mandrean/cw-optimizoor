@@ -40,6 +40,7 @@ assert_cmd = "2"
 cucumber = { version = "0.19", features = ["libtest", "macros"]}
 petname = "1"
 predicates = "2"
+regex = "1.7"
 thiserror = "1"
 
 [[test]]

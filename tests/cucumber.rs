@@ -1,6 +1,6 @@
 use std::{
     env, fmt, fs,
-    io::{Error as IoError, Write},
+    io::{Error as IoError, Read, Write},
     path::PathBuf,
     process::{Command, Output, Stdio},
 };
@@ -12,6 +12,7 @@ use itertools::Itertools;
 use path_absolutize::Absolutize;
 use petname::petname;
 use predicates::prelude::predicate;
+use regex::Regex;
 use thiserror::Error;
 
 const CARGO_CW_OPTIMIZOOR: &str = "cargo-cw-optimizoor";
@@ -99,20 +100,33 @@ async fn runs_cw_optimizoor(
     Ok(())
 }
 
+const MIGRATE_REGEX: &str = r"pub fn migrate\(\s*(?:mut\s+)?deps: DepsMut, (?:_env:|env:)\s*Env, (?:_msg:|msg:)\s*(?:Empty|MigrateMsg)\s*\) -> Result<Response, ContractError> \{";
+
 #[given(expr = "the user makes a change in the {string} contract")]
 async fn makes_a_change_in_contract(world: &mut CwWorld, name: String) -> anyhow::Result<()> {
     let filename = world
         .ws_root
         .join("contracts")
         .join(name)
-        .join("src/lib.rs");
+        .join("src/contract.rs");
+    let mut file = fs::OpenOptions::new().read(true).open(&filename)?;
+    let mut contract = String::new();
+    file.read_to_string(&mut contract)?;
+
+    let petname = petname(1, "");
+    let change = format!(
+        "\n    if \"{}\" == \"{}\" {{ panic!() }}",
+        petname,
+        petname
+    );
+    let replaced = Regex::new(MIGRATE_REGEX)?
+        .replace_all(&contract, format!("$0{}", change))
+        .to_string();
     let mut file = fs::OpenOptions::new()
         .write(true)
-        .append(true)
-        .open(filename)?;
-
-    let change = format!("pub fn {}() {{ assert!(true) }}", petname(1, ""));
-    writeln!(file, "{}", change)?;
+        .truncate(true)
+        .open(&filename)?;
+    file.write(replaced.as_bytes())?;
 
     Ok(())
 }

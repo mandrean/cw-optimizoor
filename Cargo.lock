@@ -713,6 +713,7 @@ dependencies = [
  "petname",
  "predicates",
  "rayon",
+ "regex",
  "semver",
  "sha2",
  "thiserror",
