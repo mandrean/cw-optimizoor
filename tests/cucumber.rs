@@ -6,8 +6,7 @@ use std::{
 };
 
 use assert_cmd::{assert::OutputAssertExt, cargo::CargoError, Command as AssertCommand};
-use async_trait::async_trait;
-use cucumber::{given, then, when, World, WorldInit};
+use cucumber::{given, then, when, writer, World};
 use glob::glob;
 use itertools::Itertools;
 use path_absolutize::Absolutize;
@@ -18,11 +17,22 @@ use thiserror::Error;
 const CARGO_CW_OPTIMIZOOR: &str = "cargo-cw-optimizoor";
 const CW_OPTIMIZOOR: &str = "cw-optimizoor";
 
-#[derive(Debug, Clone, WorldInit)]
+#[derive(Debug, Clone, World)]
+#[world(init = Self::new)]
 pub struct CwWorld {
     ws_root: PathBuf,
     cmd_output: Option<Output>,
     artifacts: Vec<PathBuf>,
+}
+
+impl CwWorld {
+    async fn new() -> Result<CwWorld, CwWorldError> {
+        Ok(Self {
+            ws_root: env::current_dir()?,
+            cmd_output: None,
+            artifacts: vec![],
+        })
+    }
 }
 
 #[derive(Error, Debug)]
@@ -46,19 +56,6 @@ impl From<CargoError> for CwWorldError {
 impl fmt::Display for CwWorldError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{:?}", self)
-    }
-}
-
-#[async_trait(? Send)]
-impl World for CwWorld {
-    type Error = CwWorldError;
-
-    async fn new() -> Result<Self, Self::Error> {
-        Ok(Self {
-            ws_root: env::current_dir()?,
-            cmd_output: None,
-            artifacts: vec![],
-        })
     }
 }
 
@@ -224,5 +221,9 @@ async fn str_is_reoptimized(world: &mut CwWorld, name: String) -> anyhow::Result
 
 #[tokio::main]
 async fn main() {
-    CwWorld::run("tests/features").await;
+    CwWorld::cucumber()
+        .with_writer(writer::Libtest::or_basic())
+        .max_concurrent_scenarios(1)
+        .run("tests/features")
+        .await;
 }

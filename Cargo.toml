@@ -37,8 +37,7 @@ tokio = { version = "1", features = ["rt", "macros"] }
 
 [dev-dependencies]
 assert_cmd = "2"
-async-trait = "0.1"
-cucumber = { version = "0.13", features = ["macros"]}
+cucumber = { version = "0.19", features = ["libtest", "macros"]}
 petname = "1"
 predicates = "2"
 thiserror = "1"
