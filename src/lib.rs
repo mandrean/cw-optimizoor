@@ -32,7 +32,7 @@ pub async fn run<P: AsRef<Path> + TakeExt<PathBuf>>(
     // all ws members that are contracts
     let all_contracts = ws
         .members()
-        .filter(|&p| p.manifest_path().starts_with(&ws.root().join(CONTRACTS)))
+        .filter(|&p| p.manifest_path().starts_with(ws.root().join(CONTRACTS)))
         .collect::<Vec<_>>();
 
     if all_contracts.is_empty() {

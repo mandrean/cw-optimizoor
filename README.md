@@ -23,6 +23,10 @@ It's primarily meant to speed up local development and testing.
 ### Installation
 
 ```sh
+# Pre-requisites
+$ rustup install 1.66.0
+$ rustup target add wasm32-unknown-unknown
+
 $ cargo install cw-optimizoor
 ```
 
@@ -53,11 +57,17 @@ $ brew install cmake pkg-config
 ```sh
 $ cargo cw-optimizoor -h
 
-USAGE:
-    cargo cw-optimizoor [WORKSPACE_PATH]
+Usage: cargo cw-optimizoor [OPTIONS] [WORKSPACE_PATH]
 
-ARGS:
-    <WORKSPACE_PATH>    Path to the workspace dir or Cargo.toml
+Arguments:
+  [WORKSPACE_PATH]  Path to the workspace dir or Cargo.toml
+
+Options:
+  -f, --features <FEATURES>  Space or comma separated list of features to activate
+      --all-features         Activate all available features
+      --no-default-features  Do not activate the `default` feature
+  -h, --help                 Print help information
+  -V, --version              Print version information
 ```
 
 ### Example

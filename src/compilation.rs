@@ -60,7 +60,6 @@ pub fn compile_opts(config: &Config, spec: ops::Packages) -> Result<CompileOptio
         target_rustdoc_args: None,
         target_rustc_args: None,
         target_rustc_crate_types: None,
-        local_rustdoc_args: None,
         rustdoc_document_private_items: false,
         honor_rust_version: true,
     })

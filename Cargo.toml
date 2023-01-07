@@ -2,6 +2,7 @@
 name = "cw-optimizoor"
 version = "0.9.0"
 authors = ["Sebastian Mandrean <sebastian.mandrean@gmail.com>"]
+rust-version = "1.66"
 edition = "2021"
 description = "A blazingly fast compiling & optimization tool for CosmWasm smart contracts."
 documentation = "https://docs.rs/cw-optimizoor"
@@ -18,9 +19,9 @@ path = "src/main.rs"
 [dependencies]
 anyhow = "1"
 binaryen = "0.12"
-cargo = "0.65"
+cargo = "0.67"
 cargo-util = "0.2"
-clap = { version = "3", features = ["derive"] }
+clap = { version = "4", features = ["derive"] }
 colour = "0.6"
 crates_io_api = "0.8"
 futures = "0.3"
@@ -36,10 +37,10 @@ tokio = { version = "1", features = ["rt", "macros"] }
 
 [dev-dependencies]
 assert_cmd = "2"
-async-trait = "0.1"
-cucumber = { version = "0.13", features = ["macros"]}
+cucumber = { version = "0.19", features = ["libtest", "macros"]}
 petname = "1"
 predicates = "2"
+regex = "1.7"
 thiserror = "1"
 
 [[test]]
