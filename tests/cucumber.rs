@@ -114,11 +114,7 @@ async fn makes_a_change_in_contract(world: &mut CwWorld, name: String) -> anyhow
     file.read_to_string(&mut contract)?;
 
     let petname = petname(1, "");
-    let change = format!(
-        "\n    if \"{}\" == \"{}\" {{ panic!() }}",
-        petname,
-        petname
-    );
+    let change = format!("\n    if \"{}\" == \"{}\" {{ panic!() }}", petname, petname);
     let replaced = Regex::new(MIGRATE_REGEX)?
         .replace_all(&contract, format!("$0{}", change))
         .to_string();
