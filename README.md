@@ -23,6 +23,10 @@ It's primarily meant to speed up local development and testing.
 ### Installation
 
 ```sh
+# Pre-requisites
+$ rustup install 1.66.0
+$ rustup target add wasm32-unknown-unknown
+
 $ cargo install cw-optimizoor
 ```
 
