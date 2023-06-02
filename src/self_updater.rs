@@ -1,10 +1,10 @@
 use colour::{green, green_ln, red, yellow, yellow_ln};
-use crates_io_api::AsyncClient;
+use crates_io_api::AsyncClient as CratesIoClient;
 use semver::Version;
 
 /// Fetches the latest version of the crate on Crates.io
 pub async fn fetch_latest_version(crate_name: &str) -> anyhow::Result<Version> {
-    let client = AsyncClient::new(
+    let client = CratesIoClient::new(
         "SelfUpdater/CheckLatestVersion",
         std::time::Duration::from_millis(1000),
     )?;

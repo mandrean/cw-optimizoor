@@ -13,6 +13,8 @@ use cargo::{
 };
 use lazy_static::lazy_static;
 
+use crate::RunContext;
+
 const RUSTFLAGS: &str = "RUSTFLAGS";
 const PROFILE_RELEASE: &str = "release";
 const TARGET_WASM32: &str = "wasm32-unknown-unknown";
@@ -22,8 +24,13 @@ lazy_static! {
 }
 
 /// Compiles the workspace packages and returns the paths to the created WASM artifacts.
-pub fn compile(cfg: &Config, ws: &Workspace, packages: ops::Packages) -> Result<Vec<PathBuf>> {
-    let wasm_paths = ops::compile(ws, &compile_opts(cfg, packages)?)?
+pub fn compile(
+    ctx: &RunContext,
+    cfg: &Config,
+    ws: &Workspace,
+    packages: ops::Packages,
+) -> Result<Vec<PathBuf>> {
+    let wasm_paths = ops::compile(ws, &compile_opts(ctx, cfg, packages)?)?
         .cdylibs
         .into_iter()
         .filter(|o| o.unit.kind.eq(&KIND_WASM32))
@@ -34,7 +41,11 @@ pub fn compile(cfg: &Config, ws: &Workspace, packages: ops::Packages) -> Result<
 }
 
 /// Variant of [`compile()`](fn@compile) which compiles each package individually by using ephemeral workspaces.
-pub fn compile_ephemerally(cfg: &Config, packages: Vec<Package>) -> anyhow::Result<Vec<PathBuf>> {
+pub fn compile_ephemerally(
+    ctx: &RunContext,
+    cfg: &Config,
+    packages: Vec<Package>,
+) -> Result<Vec<PathBuf>> {
     packages
         .into_iter()
         .map(|p| {
@@ -44,17 +55,25 @@ pub fn compile_ephemerally(cfg: &Config, packages: Vec<Package>) -> anyhow::Resu
             )
         })
         .try_fold(vec![], |mut acc, (package, ws)| {
-            let mut res = compile(cfg, &ws?, ops::Packages::Packages(vec![package]))?;
+            let mut res = compile(ctx, cfg, &ws?, ops::Packages::Packages(vec![package]))?;
             acc.append(&mut res);
             anyhow::Ok(acc)
         })
 }
 
 /// Sets up the high-level compilation options.
-pub fn compile_opts(config: &Config, spec: ops::Packages) -> Result<CompileOptions> {
+pub fn compile_opts(
+    ctx: &RunContext,
+    config: &Config,
+    spec: ops::Packages,
+) -> Result<CompileOptions> {
     Ok(CompileOptions {
         build_config: build_cfg(config)?,
-        cli_features: CliFeatures::new_all(false),
+        cli_features: CliFeatures::from_command_line(
+            &ctx.features,
+            ctx.all_features,
+            !ctx.no_default_features,
+        )?,
         spec,
         filter: CompileFilter::lib_only(),
         target_rustdoc_args: None,
