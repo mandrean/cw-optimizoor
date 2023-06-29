@@ -1,6 +1,6 @@
 [package]
 name = "cw-optimizoor"
-version = "0.9.3"
+version = "0.10.0"
 authors = ["Sebastian Mandrean <sebastian.mandrean@gmail.com>"]
 rust-version = "1.69"
 edition = "2021"
