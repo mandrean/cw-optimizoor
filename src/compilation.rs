@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use std::{cell::RefCell, env, path::PathBuf, thread};
 
 use anyhow::Result;
@@ -100,7 +101,7 @@ pub fn build_cfg(config: &Config) -> Result<BuildConfig> {
         build_plan: false,
         unit_graph: false,
         primary_unit_rustc: None,
-        rustfix_diagnostic_server: RefCell::new(None),
+        rustfix_diagnostic_server: Arc::new(RefCell::new(None)),
         export_dir: None,
         future_incompat_report: false,
         timing_outputs: Vec::new(),

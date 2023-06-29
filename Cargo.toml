@@ -19,18 +19,18 @@ path = "src/main.rs"
 [dependencies]
 anyhow = "1"
 binaryen = "0.12"
-cargo = "0.67"
+cargo = "0.71"
 cargo-util = "0.2"
 clap = { version = "4", features = ["derive"] }
-colour = "0.6"
+colour = "0.7"
 crates_io_api = "0.8"
 futures = "0.3"
 glob = "0.3"
 hex = "0.4"
-itertools = "0.10"
+itertools = "0.11"
 lazy_static = "1.4"
-path-absolutize = "3.0"
-rayon = "1.5"
+path-absolutize = "3.1"
+rayon = "1.7"
 semver = "1"
 sha2 = "0.10"
 tokio = { version = "1", features = ["rt", "macros"] }
@@ -39,8 +39,8 @@ tokio = { version = "1", features = ["rt", "macros"] }
 assert_cmd = "2"
 cucumber = { version = "0.19", features = ["libtest", "macros"]}
 petname = "1"
-predicates = "2"
-regex = "1.7"
+predicates = "3"
+regex = "1.8"
 thiserror = "1"
 
 [[test]]
