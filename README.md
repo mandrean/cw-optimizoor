@@ -24,7 +24,7 @@ It's primarily meant to speed up local development and testing.
 
 ```sh
 # Pre-requisites
-$ rustup install 1.66.0
+$ rustup install 1.69.0
 $ rustup target add wasm32-unknown-unknown
 
 $ cargo install cw-optimizoor
