@@ -29,11 +29,15 @@ pub async fn run<P: AsRef<Path> + TakeExt<PathBuf>>(
     let ws = Workspace::new(manifest_path.as_path(), &cfg).expect("couldn't create workspace");
     let output_dir = create_artifacts_dir(&ws)?;
 
-    // all ws members that are contracts
-    let all_contracts = ws
-        .members()
-        .filter(|&p| p.manifest_path().starts_with(ws.root().join(CONTRACTS)))
-        .collect::<Vec<_>>();
+    // Find all ws members that are contracts. If the workspace is virtual, only consider members
+    // that are located in the 'contracts' directory. Otherwise, consider all members.
+    let all_contracts = if ws.is_virtual() {
+        ws.members()
+            .filter(|&p| p.manifest_path().starts_with(ws.root().join(CONTRACTS)))
+            .collect::<Vec<_>>()
+    } else {
+        ws.members().collect::<Vec<_>>()
+    };
 
     if all_contracts.is_empty() {
         return Err(anyhow!("No CW contracts found. Exiting."));
