@@ -57,15 +57,12 @@ $ brew install cmake pkg-config
 ```sh
 $ cargo cw-optimizoor -h
 
-Usage: cargo cw-optimizoor [OPTIONS] [WORKSPACE_PATH]
+Usage: cargo cw-optimizoor [WORKSPACE_PATH]
 
 Arguments:
   [WORKSPACE_PATH]  Path to the workspace dir or Cargo.toml
 
 Options:
-  -f, --features <FEATURES>  Space or comma separated list of features to activate
-      --all-features         Activate all available features
-      --no-default-features  Do not activate the `default` feature
   -h, --help                 Print help information
   -V, --version              Print version information
 ```
