@@ -57,7 +57,7 @@ $ brew install cmake pkg-config
 ```sh
 $ cargo cw-optimizoor -h
 
-Usage: cargo cw-optimizoor [OPTIONS] [WORKSPACE_PATH]
+Usage: cargo cw-optimizoor [WORKSPACE_PATH]
 
 Arguments:
   [WORKSPACE_PATH]  Path to the workspace dir or Cargo.toml
