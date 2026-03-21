@@ -2,19 +2,36 @@ use colour::{green, green_ln, red, yellow, yellow_ln};
 use crates_io_api::AsyncClient;
 use semver::Version;
 
+use crate::error::{Error, Result};
+
 /// Fetches the latest version of the crate on Crates.io
-pub async fn fetch_latest_version(crate_name: &str) -> anyhow::Result<Version> {
+pub async fn fetch_latest_version(crate_name: &str) -> Result<Version> {
     let client = AsyncClient::new(
         "SelfUpdater/CheckLatestVersion",
         std::time::Duration::from_millis(1000),
-    )?;
+    )
+    .map_err(|source| Error::UpdateCheckClient {
+        source: anyhow::Error::new(source),
+    })?;
 
-    let latest_version = client
-        .get_crate(crate_name)
-        .await?
+    let crate_name = crate_name.to_owned();
+    let max_version = client
+        .get_crate(&crate_name)
+        .await
+        .map_err(|source| Error::UpdateCheckRequest {
+            crate_name: crate_name.clone(),
+            source,
+        })?
         .crate_data
-        .max_version
-        .parse::<Version>()?;
+        .max_version;
+    let latest_version =
+        max_version
+            .parse::<Version>()
+            .map_err(|source| Error::UpdateCheckVersion {
+                crate_name: crate_name.clone(),
+                version: max_version.clone(),
+                source,
+            })?;
 
     Ok(latest_version)
 }
@@ -29,6 +46,6 @@ pub fn check_version(crate_name: &str, current_version: &Version, latest_version
         print!("Current version is ");
         red!("v{}", current_version);
         print!(". To update, run: ");
-        green_ln!("cargo install {}", crate_name);
+        green_ln!("cargo install --locked {}", crate_name);
     }
 }

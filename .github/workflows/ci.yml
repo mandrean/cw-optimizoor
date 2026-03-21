@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  ci:
+    name: Check, lint, and test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6.0.2
+        with:
+          submodules: recursive
+
+      - name: Install wabt
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wabt
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.85.0
+          targets: wasm32-unknown-unknown
+          components: rustfmt, clippy
+
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2.9.1
+
+      - name: Check formatting
+        run: cargo fmt --all --check
+
+      - name: Run clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Run library tests
+        run: cargo test --lib
+
+      - name: Run integration tests
+        run: cargo test --test integration
+
+      - name: Run e2e tests
+        run: cargo test --test e2e
+
+      - name: Run doc tests
+        run: cargo test --doc

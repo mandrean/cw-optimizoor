@@ -1,7 +1,3 @@
-use core::{
-    convert::AsRef,
-    result::Result::{Err, Ok},
-};
 use std::{
     env::consts::ARCH,
     ffi::OsStr,
@@ -10,61 +6,42 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use anyhow::{anyhow, Context, Result};
 use binaryen::Module;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
-use crate::hashing::checksum;
+use crate::{
+    error::{Error, Result},
+    hashing::{checksum, read_checksums},
+};
 
 pub fn incremental_optimizations(
-    output_dir: &PathBuf,
+    output_dir: &Path,
     intermediate_wasm_paths: Vec<PathBuf>,
-    prev_intermediate_checksums: String,
+    prev_intermediate_checksums: &str,
 ) -> Result<Vec<PathBuf>> {
-    let mut checksums = String::new();
     let checksums_path = output_dir.join("checksums.txt");
-    File::options()
-        .read(true)
-        .write(true)
-        .create(true)
-        .open(&checksums_path)?
-        .read_to_string(&mut checksums)
-        .context(format!(
-            "Failed read from {path}",
-            path = checksums_path.display()
-        ))?;
+    let checksums = read_checksums(&checksums_path)?;
     let final_wasm_paths = intermediate_wasm_paths
         .par_iter()
         .map(|wasm_path| {
             let output_path = optimized_output_path(wasm_path, output_dir)?;
+            let wasm_name = artifact_name(wasm_path)?;
+            let input_checksum = checksum(wasm_path)?;
 
             // if optimized artifact exists,
             // and both its and prev intermediate artifact checksums match,
             // then skip optimizing it again
             if output_path.exists()
-                && prev_intermediate_checksums
-                    .contains(&checksum(wasm_path).expect("couldn't calculate checksum"))
-                && checksums.contains(&checksum(&output_path).expect("couldn't calculate checksum"))
+                && prev_intermediate_checksums.contains(&input_checksum)
+                && checksums.contains(&checksum(&output_path)?)
             {
-                println!(
-                    "    ...⏭️  {} is unchanged. Skipping.",
-                    wasm_path
-                        .file_stem()
-                        .expect("missing file stem")
-                        .to_string_lossy()
-                );
+                println!("    ...⏭️  {} is unchanged. Skipping.", wasm_name);
             } else {
                 optimize(wasm_path, &output_path)?;
-                println!(
-                    "    ...✅ {} was optimized.",
-                    wasm_path
-                        .file_stem()
-                        .expect("missing file stem")
-                        .to_string_lossy()
-                );
+                println!("    ...✅ {} was optimized.", wasm_name);
             }
 
-            anyhow::Ok(output_path)
+            Ok(output_path)
         })
         .collect::<Result<Vec<PathBuf>>>()?;
 
@@ -87,42 +64,77 @@ pub fn optimize<P: AsRef<Path>>(input_path: P, output_path: P) -> Result<()> {
 
 /// Reads & deserializes the WASM artifact into a binaryen IR module.
 pub fn read_module<P: AsRef<Path>>(wasm_path: P) -> Result<binaryen::Module> {
-    let mut f = File::open(wasm_path).map_err(|_| anyhow!("WASM file not found"))?;
+    let wasm_path = wasm_path.as_ref();
+    let mut f = File::open(wasm_path).map_err(|source| Error::ReadWasm {
+        path: wasm_path.to_path_buf(),
+        source,
+    })?;
     let mut contents = Vec::new();
     f.read_to_end(&mut contents)
-        .map_err(|_| anyhow!("error reading WASM file"))?;
+        .map_err(|source| Error::ReadWasm {
+            path: wasm_path.to_path_buf(),
+            source,
+        })?;
 
-    binaryen::Module::read(&contents).map_err(|_| anyhow!("error parsing WASM file"))
+    binaryen::Module::read(&contents).map_err(|source| Error::ParseWasm {
+        path: wasm_path.to_path_buf(),
+        reason: format!("{source:?}"),
+    })
 }
 
 /// Serializes & writes the binaryen IR module to a WASM artifact.
 pub fn write_module<P: AsRef<Path>>(output_path: P, wasm: &Module) -> Result<()> {
-    let mut f = File::create(output_path).map_err(|_| anyhow!("error creating WASM file"))?;
+    let output_path = output_path.as_ref();
+    let mut f = File::create(output_path).map_err(|source| Error::CreateWasm {
+        path: output_path.to_path_buf(),
+        source,
+    })?;
     f.write_all(wasm.write().as_slice())
-        .map_err(|_| anyhow!("error writing WASM file"))
+        .map_err(|source| Error::WriteWasm {
+            path: output_path.to_path_buf(),
+            source,
+        })
 }
 
 /// Returns the optimized WASM output path.
 /// Suffixes the filename (before extension) with the host's CPU arch.
-pub fn optimized_output_path<P: AsRef<Path>>(wasm_path: P, output_dir: P) -> Result<PathBuf> {
-    let filename = PathBuf::from(
-        wasm_path
-            .as_ref()
-            .file_name()
-            .ok_or_else(|| anyhow!("missing filename"))?,
-    );
+pub fn optimized_output_path<P: AsRef<Path>, Q: AsRef<Path>>(
+    wasm_path: P,
+    output_dir: Q,
+) -> Result<PathBuf> {
+    let wasm_path = wasm_path.as_ref();
+    let filename =
+        PathBuf::from(
+            wasm_path
+                .file_name()
+                .ok_or_else(|| Error::MissingArtifactFileName {
+                    path: wasm_path.to_path_buf(),
+                })?,
+        );
     let filename = match (
         filename.file_stem().and_then(OsStr::to_str),
         filename.extension().and_then(OsStr::to_str),
     ) {
         (Some(stem), Some(ext)) => Ok(format!("{}-{}.{}", stem, ARCH, ext)),
-        _ => Err(anyhow!("couldn't parse filename")),
+        _ => Err(Error::InvalidArtifactFileName {
+            path: wasm_path.to_path_buf(),
+        }),
     }?;
 
     let mut output_path = output_dir.as_ref().to_path_buf();
     output_path.push(filename);
 
     Ok(output_path)
+}
+
+fn artifact_name(wasm_path: &Path) -> Result<String> {
+    wasm_path
+        .file_stem()
+        .and_then(OsStr::to_str)
+        .map(ToOwned::to_owned)
+        .ok_or_else(|| Error::InvalidArtifactFileName {
+            path: wasm_path.to_path_buf(),
+        })
 }
 
 #[cfg(test)]

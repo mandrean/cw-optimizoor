@@ -117,7 +117,7 @@ mod tests {
     fn returns_first_n_items() {
         assert_eq!(
             vec!["May", "I", "Speak"],
-            vec!["May", "I", "Speak", "To", "The", "Manager"].ltake(3)
+            ["May", "I", "Speak", "To", "The", "Manager"].ltake(3)
         );
     }
 
@@ -125,7 +125,7 @@ mod tests {
     fn returns_last_n_items() {
         assert_eq!(
             vec!["The", "Manager"],
-            vec!["May", "I", "Speak", "To", "The", "Manager"].rtake(2)
+            ["May", "I", "Speak", "To", "The", "Manager"].rtake(2)
         );
     }
 
@@ -133,7 +133,7 @@ mod tests {
     fn skips_first_n_items() {
         assert_eq!(
             vec!["The", "Manager"],
-            vec!["May", "I", "Speak", "To", "The", "Manager"].lskip(4)
+            ["May", "I", "Speak", "To", "The", "Manager"].lskip(4)
         );
     }
 
@@ -141,7 +141,7 @@ mod tests {
     fn skips_last_n_items() {
         assert_eq!(
             vec!["May", "I", "Speak"],
-            vec!["May", "I", "Speak", "To", "The", "Manager"].rskip(3)
+            ["May", "I", "Speak", "To", "The", "Manager"].rskip(3)
         );
     }
 }
