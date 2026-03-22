@@ -1,8 +1,7 @@
 use std::env;
 
-use anyhow::Result;
-use clap::Parser;
-use futures::TryFutureExt;
+use anyhow::{Context, Result};
+use clap::{Args, Parser};
 use semver::Version;
 
 use cw_optimizoor::self_updater;
@@ -12,18 +11,18 @@ const PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// cw-optimizoor
 #[derive(Debug, Parser)]
-#[clap(name = "cargo")]
-#[clap(bin_name = "cargo")]
-#[clap(about = "CosmWasm optimizer", long_about = None)]
+#[command(name = "cargo")]
+#[command(bin_name = "cargo")]
+#[command(about = "CosmWasm optimizer", long_about = None)]
 enum Cargo {
     CwOptimizoor(CwOptimizoor),
 }
 
-#[derive(clap::Args, Debug)]
-#[clap(author, version, about, long_about = None)]
+#[derive(Args, Debug)]
+#[command(author, version, about, long_about = None)]
 struct CwOptimizoor {
     /// Path to the workspace dir or Cargo.toml
-    #[clap(value_parser)]
+    #[arg(value_parser)]
     workspace_path: Option<std::path::PathBuf>,
 }
 
@@ -31,19 +30,23 @@ struct CwOptimizoor {
 async fn main() -> Result<()> {
     let Cargo::CwOptimizoor(args) = Cargo::parse();
 
-    let workspace_path = args
-        .workspace_path
-        .unwrap_or_else(|| env::current_dir().expect("couldn't get current directory"));
+    let workspace_path = match args.workspace_path {
+        Some(path) => path,
+        None => env::current_dir().context("failed to resolve the current directory")?,
+    };
 
-    let current_version = PKG_VERSION.parse::<Version>()?;
-    let (latest_version, run_res) = tokio::join!(
-        self_updater::fetch_latest_version(PKG_NAME).unwrap_or_else(|_| current_version.clone()),
-        cw_optimizoor::run(workspace_path)
-    );
+    let current_version = Version::parse(PKG_VERSION).context("failed to parse package version")?;
+    std::mem::drop(tokio::spawn({
+        let current_version = current_version.clone();
+        async move {
+            // Best-effort only: this background check must never block the optimizer.
+            if let Ok(latest_version) = self_updater::fetch_latest_version(PKG_NAME).await {
+                self_updater::check_version(PKG_NAME, &current_version, &latest_version);
+            }
+        }
+    }));
 
-    run_res?;
-
-    self_updater::check_version(PKG_NAME, &current_version, &latest_version);
+    cw_optimizoor::run(workspace_path).await?;
 
     Ok(())
 }
