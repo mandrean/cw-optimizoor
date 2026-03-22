@@ -36,16 +36,17 @@ async fn main() -> Result<()> {
     };
 
     let current_version = Version::parse(PKG_VERSION).context("failed to parse package version")?;
-    let update_check =
-        tokio::spawn(async { self_updater::fetch_latest_version(PKG_NAME).await.ok() });
+    let _ = tokio::spawn({
+        let current_version = current_version.clone();
+        async move {
+            // Best-effort only: this background check must never block the optimizer.
+            if let Ok(latest_version) = self_updater::fetch_latest_version(PKG_NAME).await {
+                self_updater::check_version(PKG_NAME, &current_version, &latest_version);
+            }
+        }
+    });
 
     cw_optimizoor::run(workspace_path).await?;
-
-    if update_check.is_finished() {
-        if let Ok(Some(latest_version)) = update_check.await {
-            self_updater::check_version(PKG_NAME, &current_version, &latest_version);
-        }
-    }
 
     Ok(())
 }
