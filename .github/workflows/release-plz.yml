@@ -28,6 +28,12 @@ jobs:
         with:
           toolchain: 1.85.0
 
+      - &configure-git-auth
+        name: Configure git auth
+        run: git config --global url."https://${GITHUB_ACTOR}:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
       - name: Run release-plz
         uses: release-plz/action@v0.5.99
         with:
@@ -49,6 +55,7 @@ jobs:
     steps:
       - *checkout
       - *install-rust
+      - *configure-git-auth
 
       - name: Run release-plz
         uses: release-plz/action@v0.5.99
