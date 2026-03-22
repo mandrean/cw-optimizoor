@@ -1,3 +1,20 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [0.10.1](https://github.com/mandrean/cw-optimizoor/compare/v0.10.0...v0.10.1) - 2026-03-22
+
+### Other
+
+- Configure git auth for release-plz
+- Fix release-plz token wiring
+- Fix release-plz workflow auth
+- Refresh cw-optimizoor for Rust 2024 and modern CI ([#43](https://github.com/mandrean/cw-optimizoor/pull/43))
 <a name="v0.10.0"></a>
 ## v0.10.0 (2023-06-29)
 
