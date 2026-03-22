@@ -36,7 +36,7 @@ async fn main() -> Result<()> {
     };
 
     let current_version = Version::parse(PKG_VERSION).context("failed to parse package version")?;
-    let _ = tokio::spawn({
+    std::mem::drop(tokio::spawn({
         let current_version = current_version.clone();
         async move {
             // Best-effort only: this background check must never block the optimizer.
@@ -44,7 +44,7 @@ async fn main() -> Result<()> {
                 self_updater::check_version(PKG_NAME, &current_version, &latest_version);
             }
         }
-    });
+    }));
 
     cw_optimizoor::run(workspace_path).await?;
 
