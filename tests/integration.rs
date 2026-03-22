@@ -3,13 +3,13 @@ mod fixture_root;
 #[path = "support/scratch.rs"]
 mod scratch;
 
-use std::fs;
+use std::{ffi::OsStr, fs, path::Path};
 
 use anyhow::Result;
 use assert_cmd::Command as AssertCommand;
-use predicates::prelude::{PredicateBooleanExt, predicate};
+use predicates::prelude::predicate;
 
-use cw_optimizoor::Error;
+use cw_optimizoor::{Error, RunOptions};
 
 #[test]
 fn cw_plus_fixture_is_initialized() -> Result<()> {
@@ -57,9 +57,7 @@ fn reports_invalid_workspace_path_for_non_manifest_file() -> Result<()> {
 fn reports_no_contracts_for_non_contract_workspace() -> Result<()> {
     let dir = scratch::create_no_contract_workspace("no-contracts-lib")?;
 
-    let runtime = tokio::runtime::Builder::new_current_thread()
-        .enable_all()
-        .build()?;
+    let runtime = runtime()?;
     let err = runtime.block_on(cw_optimizoor::run(&dir)).unwrap_err();
     match err {
         Error::NoContracts { contracts_dir } => assert_eq!(contracts_dir, dir.join("contracts")),
@@ -95,10 +93,114 @@ fn cli_help_matches_supported_interface() -> Result<()> {
     cmd.assert()
         .success()
         .stdout(predicate::str::contains(
-            "Usage: cargo cw-optimizoor [WORKSPACE_PATH]",
+            "Usage: cargo cw-optimizoor [OPTIONS] [WORKSPACE_PATH]",
         ))
         .stdout(predicate::str::contains("[WORKSPACE_PATH]"))
-        .stdout(predicate::str::contains("--all-features").not());
+        .stdout(predicate::str::contains("-F, --features <FEATURES>"))
+        .stdout(predicate::str::contains("--all-features"))
+        .stdout(predicate::str::contains("--no-default-features"))
+        .stdout(predicate::str::contains(
+            "Space or comma separated list of features to activate",
+        ));
+
+    Ok(())
+}
+
+#[test]
+fn forwards_features_to_workspace_and_ephemeral_contract_builds() -> Result<()> {
+    let dir = scratch::create_feature_forwarding_workspace("feature-forwarding")?;
+    let runtime = runtime()?;
+
+    let err = runtime.block_on(cw_optimizoor::run(&dir)).unwrap_err();
+    assert!(matches!(err, Error::CompileWorkspace { .. }));
+
+    runtime.block_on(cw_optimizoor::run_with_options(RunOptions {
+        workspace_path: dir.clone(),
+        features: vec![String::from("needs_flag")],
+        all_features: false,
+        no_default_features: false,
+    }))?;
+    assert_optimized_wasm_exists(&dir)?;
+
+    Ok(())
+}
+
+#[test]
+fn forwards_all_features_to_contract_builds() -> Result<()> {
+    let dir = scratch::create_all_features_workspace("all-features")?;
+    let runtime = runtime()?;
+
+    let err = runtime.block_on(cw_optimizoor::run(&dir)).unwrap_err();
+    assert!(matches!(err, Error::CompileWorkspace { .. }));
+
+    runtime.block_on(cw_optimizoor::run_with_options(RunOptions {
+        workspace_path: dir.clone(),
+        features: Vec::new(),
+        all_features: true,
+        no_default_features: false,
+    }))?;
+    assert_optimized_wasm_exists(&dir)?;
+
+    Ok(())
+}
+
+#[test]
+fn forwards_no_default_features_to_contract_builds() -> Result<()> {
+    let dir = scratch::create_no_default_features_workspace("no-default-features")?;
+    let runtime = runtime()?;
+
+    let err = runtime.block_on(cw_optimizoor::run(&dir)).unwrap_err();
+    assert!(matches!(err, Error::CompileWorkspace { .. }));
+
+    runtime.block_on(cw_optimizoor::run_with_options(RunOptions {
+        workspace_path: dir.clone(),
+        features: Vec::new(),
+        all_features: false,
+        no_default_features: true,
+    }))?;
+    assert_optimized_wasm_exists(&dir)?;
+
+    Ok(())
+}
+
+#[test]
+fn reports_invalid_feature_selection() -> Result<()> {
+    let dir = scratch::create_feature_forwarding_workspace("invalid-feature-selection")?;
+    let runtime = runtime()?;
+
+    let err = runtime
+        .block_on(cw_optimizoor::run_with_options(RunOptions {
+            workspace_path: dir,
+            features: vec![String::from("dep:helper")],
+            all_features: false,
+            no_default_features: false,
+        }))
+        .unwrap_err();
+    match err {
+        Error::FeatureSelection { source } => {
+            assert!(source.to_string().contains("explicit `dep:` syntax"));
+        }
+        other => panic!("expected FeatureSelection, got {other:?}"),
+    }
+
+    Ok(())
+}
+
+fn runtime() -> Result<tokio::runtime::Runtime> {
+    tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .map_err(Into::into)
+}
+
+fn assert_optimized_wasm_exists(workspace_dir: &Path) -> Result<()> {
+    let artifacts_dir = workspace_dir.join("artifacts");
+    assert!(artifacts_dir.join("checksums.txt").exists());
+    assert!(
+        fs::read_dir(&artifacts_dir)?
+            .flatten()
+            .any(|entry| { entry.path().extension() == Some(OsStr::new("wasm")) })
+    );
 
     Ok(())
 }

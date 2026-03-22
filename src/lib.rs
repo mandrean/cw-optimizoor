@@ -26,6 +26,25 @@ const CONTRACTS: &str = "contracts";
 const LIBRARY: &str = "library";
 const ARTIFACTS: &str = "artifacts";
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RunOptions {
+    pub workspace_path: PathBuf,
+    pub features: Vec<String>,
+    pub all_features: bool,
+    pub no_default_features: bool,
+}
+
+impl RunOptions {
+    pub fn new<P: AsRef<Path>>(workspace_path: P) -> Self {
+        Self {
+            workspace_path: workspace_path.as_ref().to_path_buf(),
+            features: Vec::new(),
+            all_features: false,
+            no_default_features: false,
+        }
+    }
+}
+
 /// Runs cw-optimizoor against the workspace path.
 ///
 /// ```rust,no_run
@@ -38,7 +57,12 @@ const ARTIFACTS: &str = "artifacts";
 /// }
 /// ```
 pub async fn run<P: AsRef<Path>>(workspace_path: P) -> Result<()> {
-    let manifest_path = find_manifest(&workspace_path)?;
+    run_with_options(RunOptions::new(workspace_path)).await
+}
+
+/// Runs cw-optimizoor against the provided workspace path and Cargo feature options.
+pub async fn run_with_options(run_options: RunOptions) -> Result<()> {
+    let manifest_path = find_manifest(&run_options.workspace_path)?;
     let cfg = config()?;
     let ws =
         Workspace::new(manifest_path.as_path(), &cfg).map_err(|source| Error::WorkspaceInit {
@@ -87,9 +111,15 @@ pub async fn run<P: AsRef<Path>>(workspace_path: P) -> Result<()> {
     let mut intermediate_wasm_paths = if common_names.is_empty() {
         Vec::new()
     } else {
-        compile(&cfg, &ws, ops::Packages::Packages(common_names))?
+        compile(
+            &run_options,
+            &cfg,
+            &ws,
+            ops::Packages::Packages(common_names),
+        )?
     };
-    let mut special_intermediate_wasm_paths = compile_ephemerally(&cfg, individual_contracts)?;
+    let mut special_intermediate_wasm_paths =
+        compile_ephemerally(&run_options, &cfg, individual_contracts)?;
     intermediate_wasm_paths.append(&mut special_intermediate_wasm_paths);
 
     println!("🤓  Intermediate checksums:");
