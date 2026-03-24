@@ -61,15 +61,20 @@ $ brew install cmake pkg-config
 ```sh
 $ cargo cw-optimizoor --help
 
-Usage: cargo cw-optimizoor [WORKSPACE_PATH]
+Usage: cargo cw-optimizoor [OPTIONS] [WORKSPACE_PATH]
 
 Arguments:
   [WORKSPACE_PATH]  Path to the workspace dir or Cargo.toml
 
 Options:
-  -h, --help     Print help
-  -V, --version  Print version
+  -F, --features <FEATURES>  Space or comma separated list of features to activate
+      --all-features         Activate all available features
+      --no-default-features  Do not activate the `default` feature
+  -h, --help                 Print help
+  -V, --version              Print version
 ```
+
+These feature toggles mirror Cargo's workspace build semantics, including feature unification across the selected workspace members.
 
 ## Example
 
@@ -77,6 +82,9 @@ Options:
 $ cargo cw-optimizoor              # defaults to the current dir
 # cargo cw-optimizoor Cargo.toml   # point directly at a workspace manifest
 # cargo cw-optimizoor .            # or use the current directory explicitly
+# cargo cw-optimizoor -F ci        # enable selected Cargo features while building
+# cargo cw-optimizoor --all-features
+# cargo cw-optimizoor --no-default-features
 
 🧐️  Compiling .../monorepo/Cargo.toml
     Finished release [optimized] target(s) in 0.10s

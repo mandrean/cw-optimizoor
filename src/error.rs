@@ -32,6 +32,12 @@ pub enum Error {
         source: anyhow::Error,
     },
 
+    #[error("failed to parse requested cargo feature flags")]
+    FeatureSelection {
+        #[source]
+        source: anyhow::Error,
+    },
+
     #[error("failed to initialize workspace from {manifest_path}")]
     WorkspaceInit {
         manifest_path: PathBuf,

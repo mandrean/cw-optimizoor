@@ -19,15 +19,19 @@ lazy_static! {
         CompileKind::Target(CompileTarget::new(TARGET_WASM32).expect("couldn't create target"));
 }
 
-use crate::error::{Error, Result};
+use crate::{
+    RunOptions,
+    error::{Error, Result},
+};
 
 /// Compiles the workspace packages and returns the paths to the created WASM artifacts.
 pub fn compile(
+    run_options: &RunOptions,
     cfg: &GlobalContext,
     ws: &Workspace,
     packages: ops::Packages,
 ) -> Result<Vec<PathBuf>> {
-    let wasm_paths = ops::compile(ws, &compile_opts(cfg, packages)?)
+    let wasm_paths = ops::compile(ws, &compile_opts(run_options, cfg, packages)?)
         .map_err(|source| Error::CompileWorkspace { source })?
         .cdylibs
         .into_iter()
@@ -39,7 +43,11 @@ pub fn compile(
 }
 
 /// Variant of [`compile()`](fn@compile) which compiles each package individually by using ephemeral workspaces.
-pub fn compile_ephemerally(cfg: &GlobalContext, packages: Vec<Package>) -> Result<Vec<PathBuf>> {
+pub fn compile_ephemerally(
+    run_options: &RunOptions,
+    cfg: &GlobalContext,
+    packages: Vec<Package>,
+) -> Result<Vec<PathBuf>> {
     packages.into_iter().try_fold(vec![], |mut acc, package| {
         let package_name = package.package_id().name().to_string();
         let ws = Workspace::ephemeral(package, cfg, None, false).map_err(|source| {
@@ -48,21 +56,35 @@ pub fn compile_ephemerally(cfg: &GlobalContext, packages: Vec<Package>) -> Resul
                 source,
             }
         })?;
-        let mut res = compile(cfg, &ws, ops::Packages::Packages(vec![package_name]))?;
+        let mut res = compile(
+            run_options,
+            cfg,
+            &ws,
+            ops::Packages::Packages(vec![package_name]),
+        )?;
         acc.append(&mut res);
         Ok(acc)
     })
 }
 
 /// Sets up the high-level compilation options.
-pub fn compile_opts(config: &GlobalContext, spec: ops::Packages) -> Result<CompileOptions> {
+pub fn compile_opts(
+    run_options: &RunOptions,
+    config: &GlobalContext,
+    spec: ops::Packages,
+) -> Result<CompileOptions> {
     let mut options = CompileOptions::new(config, CompileMode::Build)
         .map_err(|source| Error::BuildConfiguration { source })?;
     options.build_config.requested_profile = InternedString::from(PROFILE_RELEASE);
     options.build_config.requested_kinds =
         CompileKind::from_requested_targets(config, &[String::from(TARGET_WASM32)])
             .map_err(|source| Error::BuildConfiguration { source })?;
-    options.cli_features = CliFeatures::new_all(false);
+    options.cli_features = CliFeatures::from_command_line(
+        &run_options.features,
+        run_options.all_features,
+        !run_options.no_default_features,
+    )
+    .map_err(|source| Error::FeatureSelection { source })?;
     options.spec = spec;
     options.filter = CompileFilter::lib_only();
     options.honor_rust_version = Some(true);
